@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANA特典航空券 マイル計算｜国内・海外</title>
+<meta name="description" content="ANA特典航空券の必要マイル数を、日程・出発/到着空港・人数から計算します。国内線・国際線、往復・片道に対応。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0d2440; --sky:#1e5aa8; --sky2:#2f74cf; --cloud:#eef3f9;
+    --line:#cdd9e8; --gold:#c9a44c; --paper:#fbfcfe;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;overflow-x:hidden;}
+  body{
+    font-family:'Zen Kaku Gothic New',sans-serif; color:var(--ink);
+    background:radial-gradient(1200px 500px at 80% -10%, #d9e6f7 0%, transparent 60%), linear-gradient(180deg,#f4f8fd 0%, #eaf1f9 100%);
+    min-height:100vh; padding-bottom:60px;
+  }
+  .header{
+    background:linear-gradient(135deg,var(--ink) 0%,var(--sky) 100%); color:#fff;
+    padding:30px 22px 64px; position:relative; overflow:hidden;
+  }
+  .header .plane-bg{position:absolute;right:-40px;top:-30px;font-size:200px;opacity:.07;transform:rotate(-18deg);}
+  .header .eyebrow{font-family:'Shippori Mincho',serif;letter-spacing:.14em;font-size:13px;color:var(--gold);}
+  .header h1{margin:6px 0 4px;font-size:27px;font-weight:900;letter-spacing:.02em;}
+  .header p{margin:0;font-size:13px;opacity:.85;}
+  .main{max-width:560px;margin:-44px auto 0;padding:0 16px;}
+  .card{background:var(--paper);border-radius:18px;box-shadow:0 18px 50px rgba(13,36,64,.16);border:1px solid var(--line);overflow:hidden;}
+  .tabs{display:flex;padding:8px;gap:8px;background:var(--cloud);border-bottom:1px solid var(--line);}
+  .tab{flex:1;padding:12px 0;border-radius:11px;border:none;cursor:pointer;font-size:15px;font-weight:800;font-family:inherit;background:transparent;color:#7e8aa0;transition:all .15s;}
+  .tab.active{background:#fff;color:var(--sky);box-shadow:0 3px 10px rgba(13,36,64,.12);}
+  .inner{padding:20px 18px;}
+  .pills{display:flex;gap:8px;margin-bottom:18px;}
+  .pill{flex:1;padding:10px 0;border-radius:10px;cursor:pointer;font-size:14.5px;font-weight:700;font-family:inherit;border:1.5px solid var(--line);background:#fff;color:#5d6b80;transition:all .15s;}
+  .pill.active{border-color:var(--sky);background:var(--sky);color:#fff;}
+  .flabel{font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--sky);margin-bottom:6px;text-transform:uppercase;font-family:'Shippori Mincho',serif;}
+  .field{width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:#fff;font-size:16px;color:var(--ink);outline:none;font-family:inherit;}
+  .field:focus{border-color:var(--sky2);box-shadow:0 0 0 3px rgba(47,116,207,.15);}
+  .route-grid{display:grid;grid-template-columns:1fr 36px 1fr;gap:8px;align-items:end;margin-bottom:18px;}
+  .plane{text-align:center;color:var(--sky);font-size:22px;padding-bottom:8px;}
+  .cities{font-size:12px;color:#7e8aa0;margin:-4px 0 12px 2px;}
+  .cabins{display:flex;flex-wrap:wrap;gap:8px;}
+  .cabin{padding:9px 13px;border-radius:9px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer;border:1.5px solid var(--line);background:#fff;color:#5d6b80;transition:all .15s;}
+  .cabin.active{border-color:var(--sky);background:var(--sky);color:#fff;}
+  .cabin:disabled{cursor:not-allowed;background:#f0f2f6;color:#c2c9d4;}
+  .dates{display:grid;gap:10px;margin-bottom:8px;}
+  .dates.rt{grid-template-columns:1fr 1fr;}
+  .dates.ow{grid-template-columns:1fr;}
+  .pax{margin-top:18px;}
+  .pax-box{border:1px solid var(--line);border-radius:12px;padding:4px 14px;background:#fff;}
+  .stepper{display:flex;align-items:center;justify-content:space-between;padding:10px 4px;border-bottom:1px dashed var(--line);}
+  .stepper:last-child{border-bottom:none;}
+  .stepper .nm{font-weight:700;color:var(--ink);font-size:15px;}
+  .stepper .ht{font-size:11.5px;color:#7e8aa0;margin-top:2px;}
+  .stepper .ctrl{display:flex;align-items:center;gap:10px;}
+  .step-btn{width:34px;height:34px;border-radius:9px;border:1.5px solid var(--line);background:#fff;color:var(--sky);font-size:20px;font-weight:700;cursor:pointer;line-height:1;font-family:inherit;}
+  .step-val{width:26px;text-align:center;font-weight:800;font-size:18px;color:var(--ink);}
+  .result-card{margin-top:18px;background:#fff;border-radius:18px;box-shadow:0 18px 40px rgba(13,36,64,.14);border:1px solid var(--line);overflow:hidden;}
+  .result-head{background:var(--ink);color:#fff;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;}
+  .result-head .lbl{font-family:'Shippori Mincho',serif;letter-spacing:.12em;font-size:13px;color:var(--gold);}
+  .result-head .sub{font-size:12px;opacity:.8;}
+  .result-body{padding:22px 20px;}
+  .err{color:#9aa6b8;text-align:center;padding:18px 0;font-size:15px;}
+  .total-wrap{text-align:center;margin-bottom:16px;}
+  .total-lbl{font-size:13px;color:#7e8aa0;margin-bottom:2px;}
+  .total-num{font-size:46px;font-weight:900;color:var(--sky);line-height:1;}
+  .total-num small{font-size:18px;margin-left:4px;color:var(--ink);}
+  .chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;background:#fff;font-size:12.5px;font-weight:700;}
+  .chip .cl{color:#7e8aa0;}
+  .rows{border-top:1px dashed var(--line);padding-top:14px;font-size:14px;}
+  .row{display:flex;justify-content:space-between;padding:6px 0;color:#3c4a60;}
+  .row b{font-weight:700;color:var(--ink);}
+  .notes{margin-top:16px;font-size:12px;line-height:1.7;color:#5d6b80;background:rgba(255,255,255,.6);border-radius:12px;padding:14px 16px;border:1px solid var(--line);}
+  .notes strong{color:var(--ink);}
+  .notes ul{margin:8px 0 0;padding-left:18px;}
+  .foot{text-align:center;font-size:11px;color:#9aa6b8;margin-top:14px;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+  <header class="header">
+    <div class="plane-bg">✈</div>
+    <div class="eyebrow">ANA MILEAGE CLUB</div>
+    <h1>特典航空券 マイル計算</h1>
+    <p>日程・空港・人数から必要マイルを表示</p>
+  </header>
+
+  <main class="main">
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" data-mode="domestic">🗾 国内線</button>
+        <button class="tab" data-mode="international">🌏 国際線</button>
+      </div>
+
+      <div class="inner">
+        <div class="pills">
+          <button class="pill active" data-trip="roundtrip">往復</button>
+          <button class="pill" data-trip="oneway">片道</button>
+        </div>
+
+        <!-- 国内線 -->
+        <div id="domFields" class="route-grid">
+          <div>
+            <div class="flabel">出発</div>
+            <select id="depAir" class="field"></select>
+          </div>
+          <div class="plane">✈</div>
+          <div>
+            <div class="flabel">到着</div>
+            <select id="arrAir" class="field"></select>
+          </div>
+        </div>
+
+        <!-- 国際線 -->
+        <div id="intlFields" class="hidden" style="margin-bottom:18px;">
+          <div class="flabel">目的地ゾーン（日本発着）</div>
+          <select id="destZone" class="field" style="margin-bottom:12px;"></select>
+          <div id="cities" class="cities"></div>
+          <div class="flabel">搭乗クラス</div>
+          <div id="cabins" class="cabins"></div>
+        </div>
+
+        <!-- 日程 -->
+        <div id="dates" class="dates rt">
+          <div>
+            <div class="flabel">出発日（往路）</div>
+            <input type="date" id="depDate" class="field">
+          </div>
+          <div id="retWrap">
+            <div class="flabel">帰着日（復路）</div>
+            <input type="date" id="retDate" class="field">
+          </div>
+        </div>
+
+        <!-- 人数 -->
+        <div class="pax">
+          <div class="flabel">搭乗人数</div>
+          <div class="pax-box" id="paxBox"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 結果 -->
+    <div class="result-card">
+      <div class="result-head">
+        <span class="lbl">REQUIRED MILES</span>
+        <span class="sub" id="resultSub"></span>
+      </div>
+      <div class="result-body" id="result"></div>
+    </div>
+
+    <div class="notes">
+      <strong>ご利用にあたって</strong>
+      <ul>
+        <li>国内線は2026/5/19搭乗分以降・普通席、国際線は2026年度・日本発着の必要マイル数です。</li>
+        <li>国際線は別途、税金・燃油サーチャージ・各種手数料がかかります（マイル外）。国内線は旅客施設使用料（PFC）が別途必要です。</li>
+        <li>実際の必要マイル数・空席状況は必ずANA公式サイトでご確認ください。</li>
+      </ul>
+    </div>
+    <div class="foot">※ 本ツールは概算用です。ANAの公式予約画面の数値が優先されます。</div>
+  </main>
+
+<script>
+/* ===== データ ===== */
+var DOM_RATES = {
+  A:{L:6000,R:6500,H:9000}, B:{L:7000,R:8500,H:10500},
+  C:{L:8000,R:9500,H:12000}, D:{L:9500,R:10500,H:13000}
+};
+var DOM_PAIRS = [
+  ["東京","秋田","A"],["東京","庄内","A"],["東京","仙台","A"],["東京","新潟","A"],
+  ["東京","八丈島","A"],["東京","富山","A"],["東京","小松","A"],["東京","能登","A"],
+  ["東京","名古屋","A"],["東京","大阪","A"],
+  ["東京","札幌","B"],["東京","稚内","B"],["東京","オホーツク紋別","B"],["東京","女満別","B"],
+  ["東京","旭川","B"],["東京","根室中標津","B"],["東京","釧路","B"],["東京","帯広","B"],
+  ["東京","函館","B"],["東京","大館能代","B"],["東京","岡山","B"],["東京","広島","B"],
+  ["東京","岩国","B"],["東京","山口宇部","B"],["東京","鳥取","B"],["東京","米子","B"],
+  ["東京","萩・石見","B"],["東京","徳島","B"],["東京","高松","B"],["東京","松山","B"],
+  ["東京","高知","B"],["東京","福岡","B"],["東京","北九州","B"],["東京","佐賀","B"],
+  ["東京","大分","B"],["東京","熊本","B"],["東京","長崎","B"],["東京","宮崎","B"],
+  ["東京","鹿児島","B"],["東京","沖縄","C"],["東京","石垣","D"],["東京","宮古","D"],
+  ["大阪","萩・石見","A"],["大阪","松山","A"],["大阪","高知","A"],["大阪","福岡","A"],
+  ["大阪","大分","A"],["大阪","熊本","A"],["大阪","宮崎","A"],
+  ["大阪","札幌","B"],["大阪","函館","B"],["大阪","女満別","B"],["大阪","旭川","B"],
+  ["大阪","釧路","B"],["大阪","青森","B"],["大阪","秋田","B"],["大阪","仙台","B"],
+  ["大阪","福島","B"],["大阪","新潟","B"],["大阪","長崎","B"],["大阪","鹿児島","B"],
+  ["大阪","沖縄","B"],["大阪","宮古","C"],["大阪","石垣","C"],
+  ["名古屋","新潟","A"],["名古屋","松山","A"],
+  ["名古屋","札幌","B"],["名古屋","女満別","B"],["名古屋","旭川","B"],["名古屋","函館","B"],
+  ["名古屋","秋田","B"],["名古屋","仙台","B"],["名古屋","福岡","B"],["名古屋","大分","B"],
+  ["名古屋","熊本","B"],["名古屋","長崎","B"],["名古屋","宮崎","B"],["名古屋","鹿児島","B"],
+  ["名古屋","沖縄","C"],["名古屋","宮古","C"],["名古屋","石垣","D"],
+  ["札幌","利尻","A"],["札幌","稚内","A"],["札幌","女満別","A"],["札幌","根室中標津","A"],
+  ["札幌","オホーツク紋別","A"],["札幌","釧路","A"],["札幌","函館","A"],["札幌","青森","A"],
+  ["札幌","秋田","A"],
+  ["札幌","広島","B"],["札幌","松山","B"],["札幌","岡山","B"],["札幌","小松","B"],
+  ["札幌","新潟","B"],["札幌","富山","B"],["札幌","静岡","B"],["札幌","仙台","B"],
+  ["札幌","福島","B"],
+  ["札幌","福岡","C"],["札幌","沖縄","D"],
+  ["福岡","対馬","A"],["福岡","五島福江","A"],["福岡","宮崎","A"],
+  ["福岡","仙台","B"],["福岡","新潟","B"],["福岡","小松","B"],["福岡","沖縄","B"],
+  ["福岡","宮古","B"],["福岡","石垣","B"],
+  ["沖縄","宮古","A"],["沖縄","石垣","A"],
+  ["沖縄","広島","B"],["沖縄","岩国","B"],["沖縄","高松","B"],["沖縄","松山","B"],
+  ["沖縄","熊本","B"],["沖縄","長崎","B"],["沖縄","宮崎","B"],["沖縄","鹿児島","B"],
+  ["沖縄","静岡","C"],["沖縄","仙台","D"],["沖縄","新潟","D"],
+  ["長崎","壱岐","A"],["長崎","五島福江","A"],["長崎","対馬","A"],
+  ["仙台","小松","A"],["仙台","広島","B"],
+  ["静岡","沖縄","C"]
+];
+function domKey(a,b){ return [a,b].sort().join("|"); }
+var DOM_MAP = {}, DOM_SET = {};
+DOM_PAIRS.forEach(function(p){ DOM_MAP[domKey(p[0],p[1])]=p[2]; DOM_SET[p[0]]=1; DOM_SET[p[1]]=1; });
+var DOM_AIRPORTS = Object.keys(DOM_SET).sort(function(a,b){ return a.localeCompare(b,"ja"); });
+
+var DOM_SEASONS = [
+  ["2026-05-19","2026-07-17","R"],["2026-07-18","2026-08-30","H"],
+  ["2026-08-31","2026-11-30","R"],["2026-12-01","2026-12-23","L"],
+  ["2026-12-24","2026-12-31","H"],["2027-01-01","2027-01-06","H"],
+  ["2027-01-07","2027-02-28","L"],["2027-03-01","2027-03-11","R"],
+  ["2027-03-12","2027-03-31","H"]
+];
+
+var INTL_ZONES = {
+  zone2:{label:"韓国・ロシア1（Zone 2）",cities:"ソウル・ウラジオストク",group:"asia",
+    rates:{Y:{L:12000,R:15000,H:24000},C:{L:36000,R:41000,H:50000}}},
+  zone3:{label:"アジア1（Zone 3）",cities:"北京・上海・香港・台北・マニラ ほか",group:"asia",
+    rates:{Y:{L:17000,R:20000,H:30000},PY:{L:30000,R:33000,H:47000},C:{L:48000,R:53000,H:65000}}},
+  zone4:{label:"アジア2（Zone 4）",cities:"シンガポール・バンコク・デリー・ハノイ ほか",group:"asia",
+    rates:{Y:{L:30000,R:35000,H:50000},PY:{L:46000,R:51000,H:71000},C:{L:80000,R:85000,H:95000},F:{L:115000,R:120000,H:171000}}},
+  zone5:{label:"ハワイ（Zone 5）",cities:"ホノルル",group:"hawaii_oce",
+    rates:{Y:{L:35000,R:40000,H:65000},PY:{L:53000,R:58000,H:88000},C:{L:80000,R:85000,H:135000},F:{L:120000,R:140000,H:240000}}},
+  zone6:{label:"北米（Zone 6）",cities:"ロサンゼルス・NY・シカゴ・バンクーバー ほか",group:"amer_eu",
+    rates:{Y:{L:40000,R:50000,H:72000},PY:{L:62000,R:72000,H:101000},C:{L:100000,R:105000,H:165000},F:{L:150000,R:170000,H:300000}}},
+  zone7:{label:"欧州・ロシア2（Zone 7）",cities:"ロンドン・パリ・フランクフルト ほか",group:"amer_eu",
+    rates:{Y:{L:45000,R:55000,H:78000},PY:{L:67000,R:77000,H:107000},C:{L:110000,R:115000,H:180000},F:{L:165000,R:190000,H:330000}}},
+  zone10:{label:"オセアニア（Zone 10）",cities:"シドニー・パース",group:"hawaii_oce",
+    rates:{Y:{L:37000,R:45000,H:65000},PY:{L:54000,R:62000,H:88000},C:{L:80000,R:90000,H:135000}}}
+};
+var CABIN_LABEL = {Y:"エコノミー",PY:"プレミアムエコノミー",C:"ビジネス",F:"ファースト"};
+
+var INTL_SEASONS = {
+  asia:[
+    ["2026-01-01","2026-01-04","H"],["2026-01-05","2026-02-13","L"],["2026-02-14","2026-03-31","R"],
+    ["2026-04-01","2026-04-28","L"],["2026-04-29","2026-05-10","H"],["2026-05-11","2026-06-30","L"],
+    ["2026-07-01","2026-07-17","R"],["2026-07-18","2026-08-23","H"],["2026-08-24","2026-12-20","R"],
+    ["2026-12-21","2026-12-31","H"],
+    ["2027-01-01","2027-01-04","H"],["2027-01-05","2027-02-03","L"],["2027-02-04","2027-02-06","H"],
+    ["2027-02-07","2027-03-31","R"],["2027-04-01","2027-04-11","R"],["2027-04-12","2027-04-28","L"],
+    ["2027-04-29","2027-05-09","H"],["2027-05-10","2027-06-30","L"],["2027-07-01","2027-07-15","R"],
+    ["2027-07-16","2027-08-23","H"],["2027-08-24","2027-09-30","R"],["2027-10-01","2027-10-07","H"],
+    ["2027-10-08","2027-11-30","R"],["2027-12-01","2027-12-19","L"],["2027-12-20","2027-12-31","H"]
+  ],
+  amer_eu:[
+    ["2026-01-01","2026-01-03","H"],["2026-01-04","2026-01-05","R"],["2026-01-06","2026-02-28","L"],
+    ["2026-03-01","2026-03-31","R"],["2026-04-01","2026-04-28","L"],["2026-04-29","2026-05-09","H"],
+    ["2026-05-10","2026-07-15","R"],["2026-07-16","2026-08-23","H"],["2026-08-24","2026-12-18","R"],
+    ["2026-12-19","2026-12-31","H"],
+    ["2027-01-01","2027-01-03","H"],["2027-01-04","2027-01-05","R"],["2027-01-06","2027-02-28","L"],
+    ["2027-03-01","2027-04-28","R"],["2027-04-29","2027-05-09","H"],["2027-05-10","2027-07-15","R"],
+    ["2027-07-16","2027-08-22","H"],["2027-08-23","2027-12-19","R"],["2027-12-20","2027-12-31","H"]
+  ],
+  hawaii_oce:[
+    ["2026-01-01","2026-01-03","H"],["2026-01-04","2026-01-06","R"],["2026-01-07","2026-02-28","L"],
+    ["2026-03-01","2026-03-31","R"],["2026-04-01","2026-04-27","L"],["2026-04-28","2026-05-09","H"],
+    ["2026-05-10","2026-05-31","L"],["2026-06-01","2026-06-30","R"],["2026-07-01","2026-07-15","L"],
+    ["2026-07-16","2026-08-23","H"],["2026-08-24","2026-12-18","R"],["2026-12-19","2026-12-31","H"],
+    ["2027-01-01","2027-01-03","H"],["2027-01-04","2027-01-05","R"],["2027-01-06","2027-02-28","L"],
+    ["2027-03-01","2027-03-31","R"],["2027-04-01","2027-04-28","L"],["2027-04-29","2027-05-09","H"],
+    ["2027-05-10","2027-05-31","L"],["2027-06-01","2027-07-15","R"],["2027-07-16","2027-08-22","H"],
+    ["2027-08-23","2027-12-19","R"],["2027-12-20","2027-12-31","H"]
+  ]
+};
+var SEASON_LABEL = {L:"ローシーズン",R:"レギュラーシーズン",H:"ハイシーズン"};
+var SEASON_COLOR = {L:"#3a7d5d",R:"#1e5aa8",H:"#c0492b"};
+
+function findSeason(table,d){
+  if(!d) return null;
+  for(var i=0;i<table.length;i++){ if(d>=table[i][0] && d<=table[i][1]) return table[i][2]; }
+  return null;
+}
+function fmt(n){ return n.toLocaleString("ja-JP"); }
+
+/* ===== 状態 ===== */
+var state = { mode:"domestic", tripType:"roundtrip", depAir:"東京", arrAir:"沖縄",
+  destZone:"zone5", cabin:"Y", depDate:"", retDate:"", adults:1, children:0, infSeat:0, infLap:0 };
+
+var PAX = [
+  {key:"adults", nm:"大人", htDom:"12歳以上", htIntl:"12歳以上"},
+  {key:"children", nm:"小児", htDom:"3〜11歳・大人と同マイル", htIntl:"2〜11歳・大人と同マイル"},
+  {key:"infSeat", nm:"幼児（座席利用）", htDom:"大人と同マイル", htIntl:"大人と同マイル"},
+  {key:"infLap", nm:"幼児（膝上）", htDom:"無料（マイル不要）", htIntl:"大人マイルの10%"}
+];
+
+/* ===== 要素 ===== */
+var $ = function(id){ return document.getElementById(id); };
+
+/* 出発・到着の選択肢を作る */
+function fillDeparture(){
+  var s = $("depAir"); s.innerHTML="";
+  DOM_AIRPORTS.forEach(function(a){
+    var o=document.createElement("option"); o.value=a; o.textContent=a;
+    if(a===state.depAir) o.selected=true; s.appendChild(o);
+  });
+}
+function fillArrival(){
+  var s=$("arrAir"); s.innerHTML="";
+  var cand=DOM_AIRPORTS.filter(function(a){ return a!==state.depAir && DOM_MAP[domKey(state.depAir,a)]; });
+  if(cand.indexOf(state.arrAir)<0) state.arrAir=cand[0];
+  cand.forEach(function(a){
+    var o=document.createElement("option"); o.value=a; o.textContent=a;
+    if(a===state.arrAir) o.selected=true; s.appendChild(o);
+  });
+}
+function fillZones(){
+  var s=$("destZone"); s.innerHTML="";
+  Object.keys(INTL_ZONES).forEach(function(k){
+    var o=document.createElement("option"); o.value=k; o.textContent=INTL_ZONES[k].label;
+    if(k===state.destZone) o.selected=true; s.appendChild(o);
+  });
+  $("cities").textContent=INTL_ZONES[state.destZone].cities;
+}
+function fillCabins(){
+  var box=$("cabins"); box.innerHTML="";
+  var avail=Object.keys(INTL_ZONES[state.destZone].rates);
+  if(avail.indexOf(state.cabin)<0) state.cabin=avail[0];
+  ["Y","PY","C","F"].forEach(function(c){
+    var b=document.createElement("button");
+    b.className="cabin"+(state.cabin===c?" active":"");
+    b.textContent=CABIN_LABEL[c];
+    if(avail.indexOf(c)<0){ b.disabled=true; }
+    else { b.addEventListener("click",function(){ state.cabin=c; fillCabins(); calc(); }); }
+    box.appendChild(b);
+  });
+}
+function fillPax(){
+  var box=$("paxBox"); box.innerHTML="";
+  PAX.forEach(function(p){
+    var ht = state.mode==="domestic"?p.htDom:p.htIntl;
+    var row=document.createElement("div"); row.className="stepper";
+    row.innerHTML='<div><div class="nm">'+p.nm+'</div><div class="ht">'+ht+'</div></div>'+
+      '<div class="ctrl"><button class="step-btn" data-act="dec">−</button>'+
+      '<span class="step-val">'+state[p.key]+'</span>'+
+      '<button class="step-btn" data-act="inc">＋</button></div>';
+    var btns=row.querySelectorAll(".step-btn");
+    btns[0].addEventListener("click",function(){ state[p.key]=Math.max(0,state[p.key]-1); fillPax(); calc(); });
+    btns[1].addEventListener("click",function(){ state[p.key]=state[p.key]+1; fillPax(); calc(); });
+    box.appendChild(row);
+  });
+}
+
+/* ===== 計算 ===== */
+function compute(){
+  if(!state.depDate) return {error:"出発日を選択してください。"};
+  if(state.tripType==="roundtrip" && !state.retDate) return {error:"復路（帰り）の日付を選択してください。"};
+  if(state.tripType==="roundtrip" && state.retDate<state.depDate) return {error:"復路は往路より後の日付にしてください。"};
+  var paxAdultLike = state.adults+state.children+state.infSeat;
+  if(paxAdultLike+state.infLap===0) return {error:"搭乗人数を入力してください。"};
+
+  if(state.mode==="domestic"){
+    var zone=DOM_MAP[domKey(state.depAir,state.arrAir)];
+    if(!zone) return {error:"この区間の特典航空券データがありません。"};
+    var sOut=findSeason(DOM_SEASONS,state.depDate);
+    var sRet=state.tripType==="roundtrip"?findSeason(DOM_SEASONS,state.retDate):null;
+    if(!sOut || (state.tripType==="roundtrip" && !sRet))
+      return {error:"対象シーズン期間外です（2026/5/19〜2027/3/31搭乗分に対応）。ANA公式でご確認ください。"};
+    var legOut=DOM_RATES[zone][sOut], legRet=sRet?DOM_RATES[zone][sRet]:0;
+    var perAdult=legOut+legRet, total=perAdult*paxAdultLike;
+    return {sOut:sOut,sRet:sRet,perAdult:perAdult,perInfLap:0,total:total,paxAdultLike:paxAdultLike};
+  } else {
+    var zi=INTL_ZONES[state.destZone], rate=zi.rates[state.cabin], table=INTL_SEASONS[zi.group];
+    var o=findSeason(table,state.depDate);
+    var r=state.tripType==="roundtrip"?findSeason(table,state.retDate):null;
+    if(!o || (state.tripType==="roundtrip" && !r))
+      return {error:"対象シーズン期間外です（2026年度に対応）。ANA公式でご確認ください。"};
+    var lo=rate[o]/2, lr=r?rate[r]/2:0, pa=lo+lr;
+    var pil=Math.round(pa*0.1);
+    return {sOut:o,sRet:r,perAdult:pa,perInfLap:pil,total:pa*paxAdultLike+pil*state.infLap,paxAdultLike:paxAdultLike};
+  }
+}
+
+function chip(label,s){
+  return '<span class="chip" style="border:1.5px solid '+SEASON_COLOR[s]+'">'+
+    '<span class="cl">'+label+'</span>'+
+    '<span style="color:'+SEASON_COLOR[s]+'">'+SEASON_LABEL[s]+'</span></span>';
+}
+
+function calc(){
+  $("resultSub").textContent=(state.tripType==="roundtrip"?"往復":"片道")+"・"+(state.mode==="domestic"?"国内線":"国際線");
+  var res=compute(), el=$("result");
+  if(res.error){ el.innerHTML='<div class="err">'+res.error+'</div>'; return; }
+  var html='<div class="total-wrap"><div class="total-lbl">合計必要マイル</div>'+
+    '<div class="total-num">'+fmt(res.total)+'<small>マイル</small></div></div>';
+  html+='<div class="chips">'+chip("往路",res.sOut)+(res.sRet?chip("復路",res.sRet):"")+'</div>';
+  html+='<div class="rows">';
+  html+='<div class="row"><span>大人1名あたり'+(state.tripType==="roundtrip"?"（往復）":"（片道）")+'</span><b>'+fmt(res.perAdult)+' マイル</b></div>';
+  if(res.paxAdultLike>0)
+    html+='<div class="row"><span>大人・小児・幼児(席) ×'+res.paxAdultLike+'名</span><b>'+fmt(res.perAdult*res.paxAdultLike)+' マイル</b></div>';
+  if(state.infLap>0)
+    html+='<div class="row"><span>幼児(膝上) ×'+state.infLap+'名</span><b>'+(state.mode==="domestic"?"0 マイル（無料）":fmt(res.perInfLap*state.infLap)+" マイル")+'</b></div>';
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+/* ===== UI更新 ===== */
+function syncMode(){
+  document.querySelectorAll(".tab").forEach(function(t){ t.classList.toggle("active",t.dataset.mode===state.mode); });
+  $("domFields").classList.toggle("hidden",state.mode!=="domestic");
+  $("intlFields").classList.toggle("hidden",state.mode!=="international");
+  fillPax();
+}
+function syncTrip(){
+  document.querySelectorAll(".pill").forEach(function(p){ p.classList.toggle("active",p.dataset.trip===state.tripType); });
+  var d=$("dates");
+  d.className="dates "+(state.tripType==="roundtrip"?"rt":"ow");
+  $("retWrap").classList.toggle("hidden",state.tripType!=="roundtrip");
+}
+
+/* ===== イベント ===== */
+document.querySelectorAll(".tab").forEach(function(t){
+  t.addEventListener("click",function(){ state.mode=t.dataset.mode; syncMode(); calc(); });
+});
+document.querySelectorAll(".pill").forEach(function(p){
+  p.addEventListener("click",function(){ state.tripType=p.dataset.trip; syncTrip(); calc(); });
+});
+$("depAir").addEventListener("change",function(e){ state.depAir=e.target.value; fillArrival(); calc(); });
+$("arrAir").addEventListener("change",function(e){ state.arrAir=e.target.value; calc(); });
+$("destZone").addEventListener("change",function(e){ state.destZone=e.target.value; $("cities").textContent=INTL_ZONES[state.destZone].cities; fillCabins(); calc(); });
+$("depDate").addEventListener("change",function(e){ state.depDate=e.target.value; calc(); });
+$("retDate").addEventListener("change",function(e){ state.retDate=e.target.value; calc(); });
+
+/* ===== 初期化 ===== */
+fillDeparture(); fillArrival(); fillZones(); fillCabins(); fillPax();
+syncMode(); syncTrip(); calc();
+</script>
+</body>
+</html>
