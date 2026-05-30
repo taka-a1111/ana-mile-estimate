@@ -86,6 +86,15 @@
   .notes strong{color:var(--ink);}
   .notes ul{margin:8px 0 0;padding-left:18px;}
   .foot{text-align:center;font-size:11px;color:#9aa6b8;margin-top:14px;}
+  .season-ref{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;}
+  .season-toggle{width:100%;border:none;background:#fff;color:var(--ink);font-family:inherit;font-size:14px;font-weight:700;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+  .season-toggle span{color:var(--sky);font-size:18px;font-weight:700;}
+  .season-body{padding:0 16px 16px;}
+  .sr-scope{font-size:12px;color:#7e8aa0;background:var(--cloud);border-radius:8px;padding:8px 10px;margin-bottom:12px;}
+  .sr-block{padding:8px 0;border-bottom:1px dashed var(--line);}
+  .sr-block:last-child{border-bottom:none;}
+  .sr-name{font-size:13.5px;font-weight:800;margin-bottom:3px;}
+  .sr-periods{font-size:13px;color:#3c4a60;line-height:1.7;}
   .hidden{display:none !important;}
 </style>
 </head>
@@ -127,8 +136,8 @@
         <div id="intlFields" class="hidden" style="margin-bottom:18px;">
           <div class="flabel">出発空港（日本）</div>
           <select id="intlDep" class="field" style="margin-bottom:12px;"></select>
-          <div class="flabel">目的地ゾーン</div>
-          <select id="destZone" class="field" style="margin-bottom:6px;"></select>
+          <div class="flabel">目的地（都市）</div>
+          <select id="destCity" class="field" style="margin-bottom:6px;"></select>
           <div id="cities" class="cities"></div>
           <div class="note-blue">国際線は日本発着（Zone 1）が基準のため、どの日本の空港から出発しても必要マイル数は同じです。</div>
           <div class="flabel">搭乗クラス</div>
@@ -162,6 +171,11 @@
         <span class="sub" id="resultSub"></span>
       </div>
       <div class="result-body" id="result"></div>
+    </div>
+
+    <div class="season-ref">
+      <button id="seasonToggle" class="season-toggle">📅 シーズン期間カレンダー<span id="seasonArrow">＋</span></button>
+      <div id="seasonBody" class="season-body hidden"></div>
     </div>
 
     <div class="notes">
@@ -242,22 +256,35 @@ var DOM_SEASONS = [
 var INTL_DEP = ["東京","大阪","名古屋","札幌","福岡","沖縄"];
 
 var INTL_ZONES = {
-  zone2:{label:"韓国・ロシア1（Zone 2）",cities:"ソウル・ウラジオストク",group:"asia",
+  zone2:{label:"韓国・ロシア1（Zone 2）",group:"asia",
+    list:["ソウル","ウラジオストク"],
     rates:{Y:{L:12000,R:15000,H:24000},C:{L:36000,R:41000,H:50000}}},
-  zone3:{label:"アジア1（Zone 3）",cities:"北京・上海・香港・台北・マニラ ほか",group:"asia",
+  zone3:{label:"アジア1（Zone 3）",group:"asia",
+    list:["北京","大連","瀋陽","青島","上海","杭州","広州","厦門","成都","武漢","深セン","香港","台北","マニラ"],
     rates:{Y:{L:17000,R:20000,H:30000},PY:{L:30000,R:33000,H:47000},C:{L:48000,R:53000,H:65000}}},
-  zone4:{label:"アジア2（Zone 4）",cities:"シンガポール・バンコク・デリー・ハノイ ほか",group:"asia",
+  zone4:{label:"アジア2（Zone 4）",group:"asia",
+    list:["シンガポール","バンコク","ホーチミン","ヤンゴン","ジャカルタ","ムンバイ","デリー","ハノイ","クアラルンプール","プノンペン","チェンナイ"],
     rates:{Y:{L:30000,R:35000,H:50000},PY:{L:46000,R:51000,H:71000},C:{L:80000,R:85000,H:95000},F:{L:115000,R:120000,H:171000}}},
-  zone5:{label:"ハワイ（Zone 5）",cities:"ホノルル",group:"hawaii_oce",
+  zone5:{label:"ハワイ（Zone 5）",group:"hawaii_oce",
+    list:["ホノルル"],
     rates:{Y:{L:35000,R:40000,H:65000},PY:{L:53000,R:58000,H:88000},C:{L:80000,R:85000,H:135000},F:{L:120000,R:140000,H:240000}}},
-  zone6:{label:"北米（Zone 6）",cities:"ロサンゼルス・NY・シカゴ・バンクーバー ほか",group:"amer_eu",
+  zone6:{label:"北米（Zone 6）",group:"amer_eu",
+    list:["ロサンゼルス","サンフランシスコ","シアトル","サンノゼ","ワシントン","ニューヨーク","シカゴ","ヒューストン","バンクーバー","メキシコシティ"],
     rates:{Y:{L:40000,R:50000,H:72000},PY:{L:62000,R:72000,H:101000},C:{L:100000,R:105000,H:165000},F:{L:150000,R:170000,H:300000}}},
-  zone7:{label:"欧州・ロシア2（Zone 7）",cities:"ロンドン・パリ・フランクフルト ほか",group:"amer_eu",
+  zone7:{label:"欧州・ロシア2（Zone 7）",group:"amer_eu",
+    list:["ロンドン","パリ","フランクフルト","ミュンヘン","デュッセルドルフ","ブリュッセル","ウィーン","ミラノ","ストックホルム","モスクワ","イスタンブール"],
     rates:{Y:{L:45000,R:55000,H:78000},PY:{L:67000,R:77000,H:107000},C:{L:110000,R:115000,H:180000},F:{L:165000,R:190000,H:330000}}},
-  zone10:{label:"オセアニア（Zone 10）",cities:"シドニー・パース",group:"hawaii_oce",
+  zone10:{label:"オセアニア（Zone 10）",group:"hawaii_oce",
+    list:["シドニー","パース"],
     rates:{Y:{L:37000,R:45000,H:65000},PY:{L:54000,R:62000,H:88000},C:{L:80000,R:90000,H:135000}}}
 };
 var CABIN_LABEL = {Y:"エコノミー",PY:"プレミアムエコノミー",C:"ビジネス",F:"ファースト"};
+
+/* 都市 → ゾーンキーのマップ */
+var CITY_ZONE = {};
+Object.keys(INTL_ZONES).forEach(function(zk){
+  INTL_ZONES[zk].list.forEach(function(c){ CITY_ZONE[c]=zk; });
+});
 
 var INTL_SEASONS = {
   asia:[
@@ -303,7 +330,7 @@ function fmt(n){ return n.toLocaleString("ja-JP"); }
 
 /* ===== 状態 ===== */
 var state = { mode:"domestic", tripType:"roundtrip", depAir:"東京", arrAir:"沖縄",
-  intlDep:"東京", destZone:"zone5", cabin:"Y", depDate:"", retDate:"",
+  intlDep:"東京", destCity:"ホノルル", cabin:"Y", depDate:"", retDate:"",
   adults:1, children:0, infSeat:0, infLap:0 };
 
 var PAX = [
@@ -352,17 +379,25 @@ function fillIntlDep(){
     if(a===state.intlDep) o.selected=true; s.appendChild(o);
   });
 }
-function fillZones(){
-  var s=$("destZone"); s.innerHTML="";
-  Object.keys(INTL_ZONES).forEach(function(k){
-    var o=document.createElement("option"); o.value=k; o.textContent=INTL_ZONES[k].label;
-    if(k===state.destZone) o.selected=true; s.appendChild(o);
+/* 選択中の都市が属するゾーン情報 */
+function curZone(){ return INTL_ZONES[CITY_ZONE[state.destCity]]; }
+
+function fillDest(){
+  var s=$("destCity"); s.innerHTML="";
+  Object.keys(INTL_ZONES).forEach(function(zk){
+    var z=INTL_ZONES[zk];
+    var og=document.createElement("optgroup"); og.label=z.label;
+    z.list.forEach(function(c){
+      var o=document.createElement("option"); o.value=c; o.textContent=c;
+      if(c===state.destCity) o.selected=true; og.appendChild(o);
+    });
+    s.appendChild(og);
   });
-  $("cities").textContent=INTL_ZONES[state.destZone].cities;
+  $("cities").textContent="ゾーン："+curZone().label;
 }
 function fillCabins(){
   var box=$("cabins"); box.innerHTML="";
-  var avail=Object.keys(INTL_ZONES[state.destZone].rates);
+  var avail=Object.keys(curZone().rates);
   if(avail.indexOf(state.cabin)<0) state.cabin=avail[0];
   ["Y","PY","C","F"].forEach(function(c){
     var b=document.createElement("button");
@@ -406,7 +441,7 @@ function milesForSeason(s, paxAdultLike){
     var per=DOM_RATES[zone][s]*(state.tripType==="roundtrip"?2:1); // 往復は片道×2
     return {perAdult:per, perInfLap:0, total:per*paxAdultLike};
   } else {
-    var full=INTL_ZONES[state.destZone].rates[state.cabin][s]; // 往復チャート値
+    var full=curZone().rates[state.cabin][s]; // 往復チャート値
     var per=state.tripType==="roundtrip"?full:full/2;
     var pil=Math.round(per*0.1);
     return {perAdult:per, perInfLap:pil, total:per*paxAdultLike+pil*state.infLap};
@@ -423,7 +458,7 @@ function computeSpecific(paxAdultLike){
     var per=DOM_RATES[zone][sOut]+(sRet?DOM_RATES[zone][sRet]:0);
     return {sOut:sOut,sRet:sRet,perAdult:per,perInfLap:0,total:per*paxAdultLike,paxAdultLike:paxAdultLike};
   } else {
-    var rate=INTL_ZONES[state.destZone].rates[state.cabin], table=INTL_SEASONS[INTL_ZONES[state.destZone].group];
+    var rate=curZone().rates[state.cabin], table=INTL_SEASONS[curZone().group];
     var o=findSeason(table,state.depDate);
     var r=state.tripType==="roundtrip"?findSeason(table,state.retDate):null;
     if(!o || (state.tripType==="roundtrip" && !r)) return {range:true};
@@ -431,6 +466,36 @@ function computeSpecific(paxAdultLike){
     var pil=Math.round(per*0.1);
     return {sOut:o,sRet:r,perAdult:per,perInfLap:pil,total:per*paxAdultLike+pil*state.infLap,paxAdultLike:paxAdultLike};
   }
+}
+
+/* シーズン期間の整形・表示 */
+var GROUP_DESC = {
+  asia:"韓国・中国・東南アジア方面（Zone2〜4）",
+  amer_eu:"北米・欧州方面（Zone6・7）",
+  hawaii_oce:"ハワイ・オセアニア方面（Zone5・10）"
+};
+function jpRange(a,b){
+  var pa=a.split("-"), pb=b.split("-");
+  if(pa[0]===pb[0]) return pa[0]+"/"+(+pa[1])+"/"+(+pa[2])+"〜"+(+pb[1])+"/"+(+pb[2]);
+  return pa[0]+"/"+(+pa[1])+"/"+(+pa[2])+"〜"+pb[0]+"/"+(+pb[1])+"/"+(+pb[2]);
+}
+function groupPeriods(table){
+  var g={L:[],R:[],H:[]};
+  table.forEach(function(t){ g[t[2]].push(jpRange(t[0],t[1])); });
+  return g;
+}
+function renderSeasonRef(){
+  var dom = state.mode==="domestic";
+  var table = dom?DOM_SEASONS:INTL_SEASONS[curZone().group];
+  var scope = dom?"国内線（2026/5/19〜2027/3/31 搭乗分）":("国際線・"+GROUP_DESC[curZone().group]+"（2026年度）");
+  var g=groupPeriods(table);
+  var html='<div class="sr-scope">'+scope+'</div>';
+  ["H","R","L"].forEach(function(s){
+    html+='<div class="sr-block">'+
+      '<div class="sr-name" style="color:'+SEASON_COLOR[s]+'">●'+SEASON_LABEL[s]+'</div>'+
+      '<div class="sr-periods">'+g[s].join("、")+'</div></div>';
+  });
+  $("seasonBody").innerHTML=html;
 }
 
 function chip(label,s){
@@ -469,6 +534,7 @@ function renderOverview(paxAdultLike, note){
 }
 
 function calc(){
+  renderSeasonRef();
   $("resultSub").textContent=(state.tripType==="roundtrip"?"往復":"片道")+"・"+(state.mode==="domestic"?"国内線":"国際線");
   var pc=precheck();
   if(pc.error){ $("result").innerHTML='<div class="err">'+pc.error+'</div>'; return; }
@@ -502,6 +568,10 @@ function syncTrip(){
 }
 
 /* ===== イベント ===== */
+$("seasonToggle").addEventListener("click",function(){
+  var body=$("seasonBody"), open=body.classList.toggle("hidden")===false;
+  $("seasonArrow").textContent=open?"−":"＋";
+});
 document.querySelectorAll(".tab").forEach(function(t){
   t.addEventListener("click",function(){ state.mode=t.dataset.mode; syncMode(); calc(); });
 });
@@ -511,12 +581,12 @@ document.querySelectorAll(".pill").forEach(function(p){
 $("depAir").addEventListener("change",function(e){ state.depAir=e.target.value; fillArrival(); calc(); });
 $("arrAir").addEventListener("change",function(e){ state.arrAir=e.target.value; calc(); });
 $("intlDep").addEventListener("change",function(e){ state.intlDep=e.target.value; });
-$("destZone").addEventListener("change",function(e){ state.destZone=e.target.value; $("cities").textContent=INTL_ZONES[state.destZone].cities; fillCabins(); calc(); });
+$("destCity").addEventListener("change",function(e){ state.destCity=e.target.value; $("cities").textContent="ゾーン："+curZone().label; fillCabins(); calc(); });
 $("depDate").addEventListener("change",function(e){ state.depDate=e.target.value; calc(); });
 $("retDate").addEventListener("change",function(e){ state.retDate=e.target.value; calc(); });
 
 /* ===== 初期化 ===== */
-fillDeparture(); fillArrival(); fillIntlDep(); fillZones(); fillCabins(); fillPax();
+fillDeparture(); fillArrival(); fillIntlDep(); fillDest(); fillCabins(); fillPax();
 syncMode(); syncTrip(); calc();
 </script>
 </body>
