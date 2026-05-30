@@ -22,13 +22,13 @@
   }
   .header{
     background:linear-gradient(135deg,var(--ink) 0%,var(--sky) 100%); color:#fff;
-    padding:30px 22px 64px; position:relative; overflow:hidden;
+    padding:30px 22px 34px; position:relative; overflow:hidden;
   }
   .header .plane-bg{position:absolute;right:-40px;top:-30px;font-size:200px;opacity:.07;transform:rotate(-18deg);}
   .header .eyebrow{font-family:'Shippori Mincho',serif;letter-spacing:.14em;font-size:13px;color:var(--gold);}
   .header h1{margin:6px 0 4px;font-size:27px;font-weight:900;letter-spacing:.02em;}
   .header p{margin:0;font-size:13px;opacity:.85;}
-  .main{max-width:560px;margin:-44px auto 0;padding:0 16px;}
+  .main{max-width:560px;margin:18px auto 0;padding:0 16px;position:relative;z-index:2;}
   .card{background:var(--paper);border-radius:18px;box-shadow:0 18px 50px rgba(13,36,64,.16);border:1px solid var(--line);overflow:hidden;}
   .tabs{display:flex;padding:8px;gap:8px;background:var(--cloud);border-bottom:1px solid var(--line);}
   .tab{flex:1;padding:12px 0;border-radius:11px;border:none;cursor:pointer;font-size:15px;font-weight:800;font-family:inherit;background:transparent;color:#7e8aa0;transition:all .15s;}
@@ -74,6 +74,12 @@
   .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;background:#fff;font-size:12.5px;font-weight:700;}
   .chip .cl{color:#7e8aa0;}
   .rows{border-top:1px dashed var(--line);padding-top:14px;font-size:14px;}
+  .ov-head{font-size:13px;font-weight:700;color:var(--ink);text-align:center;margin-bottom:14px;}
+  .srow{display:flex;justify-content:space-between;align-items:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:8px;}
+  .srow .sname{font-size:14px;font-weight:700;}
+  .srow .smiles{font-size:22px;font-weight:900;color:var(--ink);}
+  .srow .smiles small{font-size:12px;font-weight:700;color:#7e8aa0;margin-left:2px;}
+  .ov-note{font-size:11.5px;color:#7e8aa0;text-align:center;margin-top:10px;line-height:1.6;}
   .row{display:flex;justify-content:space-between;padding:6px 0;color:#3c4a60;}
   .row b{font-weight:700;color:var(--ink);}
   .notes{margin-top:16px;font-size:12px;line-height:1.7;color:#5d6b80;background:rgba(255,255,255,.6);border-radius:12px;padding:14px 16px;border:1px solid var(--line);}
@@ -384,32 +390,46 @@ function fillPax(){
 }
 
 /* ===== 計算 ===== */
-function compute(){
-  if(!state.depDate) return {error:"出発日を選択してください。"};
-  if(state.tripType==="roundtrip" && !state.retDate) return {error:"復路（帰り）の日付を選択してください。"};
-  if(state.tripType==="roundtrip" && state.retDate<state.depDate) return {error:"復路は往路より後の日付にしてください。"};
+/* 基本チェック（人数・区間）。問題なければ {paxAdultLike} を返す */
+function precheck(){
   var paxAdultLike = state.adults+state.children+state.infSeat;
   if(paxAdultLike+state.infLap===0) return {error:"搭乗人数を入力してください。"};
+  if(state.mode==="domestic" && !DOM_MAP[domKey(state.depAir,state.arrAir)])
+    return {error:"この区間の特典航空券データがありません。"};
+  return {paxAdultLike:paxAdultLike};
+}
 
+/* 指定シーズン(s)で往復/片道とも同一シーズンと仮定した必要マイル */
+function milesForSeason(s, paxAdultLike){
   if(state.mode==="domestic"){
     var zone=DOM_MAP[domKey(state.depAir,state.arrAir)];
-    if(!zone) return {error:"この区間の特典航空券データがありません。"};
+    var per=DOM_RATES[zone][s]*(state.tripType==="roundtrip"?2:1); // 往復は片道×2
+    return {perAdult:per, perInfLap:0, total:per*paxAdultLike};
+  } else {
+    var full=INTL_ZONES[state.destZone].rates[state.cabin][s]; // 往復チャート値
+    var per=state.tripType==="roundtrip"?full:full/2;
+    var pil=Math.round(per*0.1);
+    return {perAdult:per, perInfLap:pil, total:per*paxAdultLike+pil*state.infLap};
+  }
+}
+
+/* 日付が入っている場合の確定計算。範囲外なら {range:true} */
+function computeSpecific(paxAdultLike){
+  if(state.mode==="domestic"){
+    var zone=DOM_MAP[domKey(state.depAir,state.arrAir)];
     var sOut=findSeason(DOM_SEASONS,state.depDate);
     var sRet=state.tripType==="roundtrip"?findSeason(DOM_SEASONS,state.retDate):null;
-    if(!sOut || (state.tripType==="roundtrip" && !sRet))
-      return {error:"対象シーズン期間外です（2026/5/19〜2027/3/31搭乗分に対応）。ANA公式でご確認ください。"};
-    var legOut=DOM_RATES[zone][sOut], legRet=sRet?DOM_RATES[zone][sRet]:0;
-    var perAdult=legOut+legRet, total=perAdult*paxAdultLike;
-    return {sOut:sOut,sRet:sRet,perAdult:perAdult,perInfLap:0,total:total,paxAdultLike:paxAdultLike};
+    if(!sOut || (state.tripType==="roundtrip" && !sRet)) return {range:true};
+    var per=DOM_RATES[zone][sOut]+(sRet?DOM_RATES[zone][sRet]:0);
+    return {sOut:sOut,sRet:sRet,perAdult:per,perInfLap:0,total:per*paxAdultLike,paxAdultLike:paxAdultLike};
   } else {
-    var zi=INTL_ZONES[state.destZone], rate=zi.rates[state.cabin], table=INTL_SEASONS[zi.group];
+    var rate=INTL_ZONES[state.destZone].rates[state.cabin], table=INTL_SEASONS[INTL_ZONES[state.destZone].group];
     var o=findSeason(table,state.depDate);
     var r=state.tripType==="roundtrip"?findSeason(table,state.retDate):null;
-    if(!o || (state.tripType==="roundtrip" && !r))
-      return {error:"対象シーズン期間外です（2026年度に対応）。ANA公式でご確認ください。"};
-    var lo=rate[o]/2, lr=r?rate[r]/2:0, pa=lo+lr;
-    var pil=Math.round(pa*0.1);
-    return {sOut:o,sRet:r,perAdult:pa,perInfLap:pil,total:pa*paxAdultLike+pil*state.infLap,paxAdultLike:paxAdultLike};
+    if(!o || (state.tripType==="roundtrip" && !r)) return {range:true};
+    var per=rate[o]/2+(r?rate[r]/2:0);
+    var pil=Math.round(per*0.1);
+    return {sOut:o,sRet:r,perAdult:per,perInfLap:pil,total:per*paxAdultLike+pil*state.infLap,paxAdultLike:paxAdultLike};
   }
 }
 
@@ -419,10 +439,8 @@ function chip(label,s){
     '<span style="color:'+SEASON_COLOR[s]+'">'+SEASON_LABEL[s]+'</span></span>';
 }
 
-function calc(){
-  $("resultSub").textContent=(state.tripType==="roundtrip"?"往復":"片道")+"・"+(state.mode==="domestic"?"国内線":"国際線");
-  var res=compute(), el=$("result");
-  if(res.error){ el.innerHTML='<div class="err">'+res.error+'</div>'; return; }
+/* 確定額の表示 */
+function renderSpecific(res){
   var html='<div class="total-wrap"><div class="total-lbl">合計必要マイル</div>'+
     '<div class="total-num">'+fmt(res.total)+'<small>マイル</small></div></div>';
   html+='<div class="chips">'+chip("往路",res.sOut)+(res.sRet?chip("復路",res.sRet):"")+'</div>';
@@ -433,7 +451,41 @@ function calc(){
   if(state.infLap>0)
     html+='<div class="row"><span>幼児(膝上) ×'+state.infLap+'名</span><b>'+(state.mode==="domestic"?"0 マイル（無料）":fmt(res.perInfLap*state.infLap)+" マイル")+'</b></div>';
   html+='</div>';
-  el.innerHTML=html;
+  $("result").innerHTML=html;
+}
+
+/* 日付未入力時：シーズン別の一覧表示 */
+function renderOverview(paxAdultLike, note){
+  var tt = state.tripType==="roundtrip"?"往復":"片道";
+  var html='<div class="ov-head">シーズン別の必要マイル（'+tt+'・'+paxAdultLike+'名'+(state.infLap>0?" ＋幼児膝上"+state.infLap+"名":"")+'）</div>';
+  ["H","R","L"].forEach(function(s){
+    var m=milesForSeason(s,paxAdultLike);
+    html+='<div class="srow" style="border-left:5px solid '+SEASON_COLOR[s]+'">'+
+      '<span class="sname" style="color:'+SEASON_COLOR[s]+'">'+SEASON_LABEL[s]+'</span>'+
+      '<span class="smiles">'+fmt(m.total)+'<small> マイル</small></span></div>';
+  });
+  html+='<div class="ov-note">'+(note?note+'<br>':'')+'出発日（往路）を選ぶと、その日のシーズンで確定額を表示します。</div>';
+  $("result").innerHTML=html;
+}
+
+function calc(){
+  $("resultSub").textContent=(state.tripType==="roundtrip"?"往復":"片道")+"・"+(state.mode==="domestic"?"国内線":"国際線");
+  var pc=precheck();
+  if(pc.error){ $("result").innerHTML='<div class="err">'+pc.error+'</div>'; return; }
+  var pax=pc.paxAdultLike;
+
+  if(state.tripType==="roundtrip" && state.depDate && state.retDate && state.retDate<state.depDate){
+    $("result").innerHTML='<div class="err">復路は往路より後の日付にしてください。</div>'; return;
+  }
+
+  var haveDates = state.depDate && (state.tripType==="oneway" || state.retDate);
+  if(haveDates){
+    var res=computeSpecific(pax);
+    if(!res.range){ renderSpecific(res); return; }
+    renderOverview(pax, "選んだ日付は対象期間外（国内線2026/5/19〜2027/3/31・国際線2026年度）のため、シーズン別の目安を表示しています。");
+    return;
+  }
+  renderOverview(pax, null);
 }
 
 /* ===== UI更新 ===== */
