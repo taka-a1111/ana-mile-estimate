@@ -43,6 +43,7 @@
   .route-grid{display:grid;grid-template-columns:1fr 36px 1fr;gap:8px;align-items:end;margin-bottom:18px;}
   .plane{text-align:center;color:var(--sky);font-size:22px;padding-bottom:8px;}
   .cities{font-size:12px;color:#7e8aa0;margin:-4px 0 12px 2px;}
+  .note-blue{font-size:11.5px;color:#5d6b80;background:#eef3f9;border-radius:8px;padding:8px 10px;margin:-4px 0 14px;}
   .cabins{display:flex;flex-wrap:wrap;gap:8px;}
   .cabin{padding:9px 13px;border-radius:9px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer;border:1.5px solid var(--line);background:#fff;color:#5d6b80;transition:all .15s;}
   .cabin.active{border-color:var(--sky);background:var(--sky);color:#fff;}
@@ -94,7 +95,7 @@
     <div class="card">
       <div class="tabs">
         <button class="tab active" data-mode="domestic">🗾 国内線</button>
-        <button class="tab" data-mode="international">🌏 国際線</button>
+        <button class="tab" data-mode="international">🌏 海外（国際線）</button>
       </div>
 
       <div class="inner">
@@ -118,9 +119,12 @@
 
         <!-- 国際線 -->
         <div id="intlFields" class="hidden" style="margin-bottom:18px;">
-          <div class="flabel">目的地ゾーン（日本発着）</div>
-          <select id="destZone" class="field" style="margin-bottom:12px;"></select>
+          <div class="flabel">出発空港（日本）</div>
+          <select id="intlDep" class="field" style="margin-bottom:12px;"></select>
+          <div class="flabel">目的地ゾーン</div>
+          <select id="destZone" class="field" style="margin-bottom:6px;"></select>
           <div id="cities" class="cities"></div>
+          <div class="note-blue">国際線は日本発着（Zone 1）が基準のため、どの日本の空港から出発しても必要マイル数は同じです。</div>
           <div class="flabel">搭乗クラス</div>
           <div id="cabins" class="cabins"></div>
         </div>
@@ -215,7 +219,10 @@ var DOM_PAIRS = [
 function domKey(a,b){ return [a,b].sort().join("|"); }
 var DOM_MAP = {}, DOM_SET = {};
 DOM_PAIRS.forEach(function(p){ DOM_MAP[domKey(p[0],p[1])]=p[2]; DOM_SET[p[0]]=1; DOM_SET[p[1]]=1; });
-var DOM_AIRPORTS = Object.keys(DOM_SET).sort(function(a,b){ return a.localeCompare(b,"ja"); });
+var DOM_AIRPORTS = Object.keys(DOM_SET);
+
+/* 主要空港（この順で先頭に表示） */
+var MAJOR = ["東京","大阪","名古屋","札幌","福岡","沖縄","仙台","広島","新潟"];
 
 var DOM_SEASONS = [
   ["2026-05-19","2026-07-17","R"],["2026-07-18","2026-08-30","H"],
@@ -224,6 +231,9 @@ var DOM_SEASONS = [
   ["2027-01-07","2027-02-28","L"],["2027-03-01","2027-03-11","R"],
   ["2027-03-12","2027-03-31","H"]
 ];
+
+/* 国際線 出発空港（日本・主要ゲートウェイ／マイルは共通） */
+var INTL_DEP = ["東京","大阪","名古屋","札幌","福岡","沖縄"];
 
 var INTL_ZONES = {
   zone2:{label:"韓国・ロシア1（Zone 2）",cities:"ソウル・ウラジオストク",group:"asia",
@@ -287,7 +297,8 @@ function fmt(n){ return n.toLocaleString("ja-JP"); }
 
 /* ===== 状態 ===== */
 var state = { mode:"domestic", tripType:"roundtrip", depAir:"東京", arrAir:"沖縄",
-  destZone:"zone5", cabin:"Y", depDate:"", retDate:"", adults:1, children:0, infSeat:0, infLap:0 };
+  intlDep:"東京", destZone:"zone5", cabin:"Y", depDate:"", retDate:"",
+  adults:1, children:0, infSeat:0, infLap:0 };
 
 var PAX = [
   {key:"adults", nm:"大人", htDom:"12歳以上", htIntl:"12歳以上"},
@@ -296,24 +307,43 @@ var PAX = [
   {key:"infLap", nm:"幼児（膝上）", htDom:"無料（マイル不要）", htIntl:"大人マイルの10%"}
 ];
 
-/* ===== 要素 ===== */
 var $ = function(id){ return document.getElementById(id); };
 
-/* 出発・到着の選択肢を作る */
-function fillDeparture(){
-  var s = $("depAir"); s.innerHTML="";
-  DOM_AIRPORTS.forEach(function(a){
-    var o=document.createElement("option"); o.value=a; o.textContent=a;
-    if(a===state.depAir) o.selected=true; s.appendChild(o);
-  });
+/* 主要空港を先頭にして、その他は五十音順に並べる */
+function splitMajor(list){
+  var major = MAJOR.filter(function(a){ return list.indexOf(a)>=0; });
+  var rest = list.filter(function(a){ return MAJOR.indexOf(a)<0; })
+                 .sort(function(a,b){ return a.localeCompare(b,"ja"); });
+  return {major:major, rest:rest};
 }
+/* セレクトを「主要空港 / その他」のグループ付きで埋める */
+function fillGrouped(sel, list, selected){
+  sel.innerHTML="";
+  var g = splitMajor(list);
+  function addGroup(label, arr){
+    if(!arr.length) return;
+    var og=document.createElement("optgroup"); og.label=label;
+    arr.forEach(function(a){
+      var o=document.createElement("option"); o.value=a; o.textContent=a;
+      if(a===selected) o.selected=true; og.appendChild(o);
+    });
+    sel.appendChild(og);
+  }
+  addGroup("主要空港", g.major);
+  addGroup("その他の空港", g.rest);
+}
+
+function fillDeparture(){ fillGrouped($("depAir"), DOM_AIRPORTS, state.depAir); }
 function fillArrival(){
-  var s=$("arrAir"); s.innerHTML="";
   var cand=DOM_AIRPORTS.filter(function(a){ return a!==state.depAir && DOM_MAP[domKey(state.depAir,a)]; });
-  if(cand.indexOf(state.arrAir)<0) state.arrAir=cand[0];
-  cand.forEach(function(a){
+  if(cand.indexOf(state.arrAir)<0) state.arrAir=splitMajor(cand).major[0] || cand[0];
+  fillGrouped($("arrAir"), cand, state.arrAir);
+}
+function fillIntlDep(){
+  var s=$("intlDep"); s.innerHTML="";
+  INTL_DEP.forEach(function(a){
     var o=document.createElement("option"); o.value=a; o.textContent=a;
-    if(a===state.arrAir) o.selected=true; s.appendChild(o);
+    if(a===state.intlDep) o.selected=true; s.appendChild(o);
   });
 }
 function fillZones(){
@@ -415,8 +445,7 @@ function syncMode(){
 }
 function syncTrip(){
   document.querySelectorAll(".pill").forEach(function(p){ p.classList.toggle("active",p.dataset.trip===state.tripType); });
-  var d=$("dates");
-  d.className="dates "+(state.tripType==="roundtrip"?"rt":"ow");
+  $("dates").className="dates "+(state.tripType==="roundtrip"?"rt":"ow");
   $("retWrap").classList.toggle("hidden",state.tripType!=="roundtrip");
 }
 
@@ -429,12 +458,13 @@ document.querySelectorAll(".pill").forEach(function(p){
 });
 $("depAir").addEventListener("change",function(e){ state.depAir=e.target.value; fillArrival(); calc(); });
 $("arrAir").addEventListener("change",function(e){ state.arrAir=e.target.value; calc(); });
+$("intlDep").addEventListener("change",function(e){ state.intlDep=e.target.value; });
 $("destZone").addEventListener("change",function(e){ state.destZone=e.target.value; $("cities").textContent=INTL_ZONES[state.destZone].cities; fillCabins(); calc(); });
 $("depDate").addEventListener("change",function(e){ state.depDate=e.target.value; calc(); });
 $("retDate").addEventListener("change",function(e){ state.retDate=e.target.value; calc(); });
 
 /* ===== 初期化 ===== */
-fillDeparture(); fillArrival(); fillZones(); fillCabins(); fillPax();
+fillDeparture(); fillArrival(); fillIntlDep(); fillZones(); fillCabins(); fillPax();
 syncMode(); syncTrip(); calc();
 </script>
 </body>
