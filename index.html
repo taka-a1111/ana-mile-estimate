@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<!-- BUILD_TAG: 2026-10-13a -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ANA・JAL 特典航空券 マイル計算｜国内・海外</title>
@@ -16,7 +17,7 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;overflow-x:hidden;}
   body{
-    font-family:'Zen Kaku Gothic New',sans-serif; color:var(--ink);
+    font-family:'Zen Kaku Gothic New','游ゴシック','Yu Gothic','メイリオ','Meiryo','Noto Sans JP',sans-serif; color:var(--ink);
     background:radial-gradient(1200px 500px at 80% -10%, #d9e6f7 0%, transparent 60%), linear-gradient(180deg,#f4f8fd 0%, #eaf1f9 100%);
     min-height:100vh; padding-bottom:60px;
   }
@@ -136,6 +137,8 @@
           </div>
         </div>
 
+        <div id="domNote" class="note-blue hidden"></div>
+
         <div id="intlFields" class="hidden" style="margin-bottom:18px;">
           <div class="flabel">出発空港（日本）</div>
           <select id="intlDep" class="field" style="margin-bottom:12px;"></select>
@@ -187,10 +190,13 @@
         <li><strong>子どものマイル：</strong>小児（国内3〜11歳／国際2〜11歳）と、座席を使う幼児は<strong>大人と同じマイル数</strong>です。膝の上に乗せる幼児（座席なし）は、国内線は<strong>無料</strong>、国際線は<strong>大人マイルの約10%</strong>です。</li>
         <li><strong>ANA</strong>は搭乗日でL/R/Hのシーズン変動あり（国内は普通席）。<strong>JAL</strong>は搭乗日でのマイル変動はなく、国内は普通席/クラスJ/ファースト、国際はエコノミー/PE/ビジネスから選べます。</li>
         <li>国際線は別途、税金・燃油サーチャージ・各種手数料がかかります（マイル外）。国内線は旅客施設使用料（PFC）等が別途必要です。</li>
+        <li><strong>ANA国内線</strong>は、AIRDO・ソラシドエア・スターフライヤー・IBEX・オリエンタルエアブリッジ・日本エアコミューターが運航するコードシェア便（ANA便名）も同じマイル数で予約できます。該当区間は選択時に表示します。</li>
+        <li><strong>ANA海外</strong>のグアム・サイパン・パラオ・セブ・ダナン・オークランドは提携航空会社の便です。マイル表が別で、シーズンによる変動はありません。座席なしの幼児は幼児運賃の購入が必要です。</li>
+        <li>就航路線は2026年10月時点です。運休・季節運航は変わるため、予約前にANA・JALの時刻表で確認してください。</li>
         <li>JAL国内線のファーストは羽田発着の一部路線のみ、JAL国際線は一部都市の代表値です。実際の必要マイル・空席は必ず各社公式でご確認ください。</li>
       </ul>
     </div>
-    <div class="foot">※ 本ツールは概算用です。各社公式の予約画面の数値が優先されます。</div>
+    <div class="foot">※ 本ツールは概算用です。各社公式の予約画面の数値が優先されます。<br>BUILD_TAG: 2026-10-13a（就航路線は2026年10月時点）</div>
   </main>
 
 <script>
@@ -199,25 +205,31 @@ var ANA_DOM_RATES = {
   A:{L:6000,R:6500,H:9000}, B:{L:7000,R:8500,H:10500},
   C:{L:8000,R:9500,H:12000}, D:{L:9500,R:10500,H:13000}
 };
+/* [出発, 到着, ゾーン, 注記]  注記なし＝ANA運航（ANAウイングス含む）
+   2026-10-13 見直し：ANAの運航がなく提携会社のコードシェアもない区間は削除（東京-仙台/新潟、大阪-女満別/旭川、名古屋-新潟/熊本、
+   札幌-紋別/松山/静岡/沖縄、福岡-宮古/石垣、沖縄-長崎/新潟/静岡、仙台-小松）。宮古-石垣・JAC離島路線などを追加。 */
+var CS = function(a){ return a+"運航のコードシェア便（ANA便名）。ANAのマイルで予約でき、必要マイルは同じです。"; };
 var ANA_DOM_PAIRS = [
-  ["東京","秋田","A"],["東京","庄内","A"],["東京","仙台","A"],["東京","新潟","A"],["東京","八丈島","A"],["東京","富山","A"],["東京","小松","A"],["東京","能登","A"],["東京","名古屋","A"],["東京","大阪","A"],
-  ["東京","札幌","B"],["東京","稚内","B"],["東京","オホーツク紋別","B"],["東京","女満別","B"],["東京","旭川","B"],["東京","根室中標津","B"],["東京","釧路","B"],["東京","帯広","B"],["東京","函館","B"],["東京","大館能代","B"],["東京","岡山","B"],["東京","広島","B"],["東京","岩国","B"],["東京","山口宇部","B"],["東京","鳥取","B"],["東京","米子","B"],["東京","萩・石見","B"],["東京","徳島","B"],["東京","高松","B"],["東京","松山","B"],["東京","高知","B"],["東京","福岡","B"],["東京","北九州","B"],["東京","佐賀","B"],["東京","大分","B"],["東京","熊本","B"],["東京","長崎","B"],["東京","宮崎","B"],["東京","鹿児島","B"],
+  ["東京","秋田","A"],["東京","庄内","A"],["東京","八丈島","A"],["東京","富山","A"],["東京","小松","A"],["東京","能登","A"],["東京","名古屋","A","成田-中部のANA便です（羽田-中部の便はありません）。"],["東京","大阪","A"],
+  ["東京","札幌","B"],["東京","稚内","B"],["東京","オホーツク紋別","B"],["東京","女満別","B",CS("AIRDO")],["東京","旭川","B",CS("AIRDO")],["東京","根室中標津","B"],["東京","釧路","B"],["東京","帯広","B",CS("AIRDO")],["東京","函館","B"],["東京","大館能代","B"],["東京","岡山","B"],["東京","広島","B"],["東京","岩国","B"],["東京","山口宇部","B"],["東京","鳥取","B"],["東京","米子","B"],["東京","萩・石見","B"],["東京","徳島","B"],["東京","高松","B"],["東京","松山","B"],["東京","高知","B"],["東京","福岡","B"],["東京","北九州","B",CS("スターフライヤー")+"一部の便は対象外です。"],["東京","佐賀","B"],["東京","大分","B"],["東京","熊本","B"],["東京","長崎","B"],["東京","宮崎","B"],["東京","鹿児島","B"],
   ["東京","沖縄","C"],["東京","石垣","D"],["東京","宮古","D"],
-  ["大阪","萩・石見","A"],["大阪","松山","A"],["大阪","高知","A"],["大阪","福岡","A"],["大阪","大分","A"],["大阪","熊本","A"],["大阪","宮崎","A"],
-  ["大阪","札幌","B"],["大阪","函館","B"],["大阪","女満別","B"],["大阪","旭川","B"],["大阪","釧路","B"],["大阪","青森","B"],["大阪","秋田","B"],["大阪","仙台","B"],["大阪","福島","B"],["大阪","新潟","B"],["大阪","長崎","B"],["大阪","鹿児島","B"],["大阪","沖縄","B"],
-  ["大阪","宮古","C"],["大阪","石垣","C"],
-  ["名古屋","新潟","A"],["名古屋","松山","A"],
-  ["名古屋","札幌","B"],["名古屋","女満別","B"],["名古屋","旭川","B"],["名古屋","函館","B"],["名古屋","秋田","B"],["名古屋","仙台","B"],["名古屋","福岡","B"],["名古屋","大分","B"],["名古屋","熊本","B"],["名古屋","長崎","B"],["名古屋","宮崎","B"],["名古屋","鹿児島","B"],
+  ["大阪","萩・石見","A","伊丹発の季節運航です。運航日はANAの時刻表で確認してください。"],["大阪","松山","A"],["大阪","高知","A"],["大阪","福岡","A"],["大阪","大分","A",CS("IBEX")],["大阪","熊本","A"],["大阪","宮崎","A"],
+  ["大阪","札幌","B"],["大阪","函館","B"],["大阪","釧路","B","伊丹発の季節運航です。運航日はANAの時刻表で確認してください。"],["大阪","青森","B"],["大阪","秋田","B"],["大阪","仙台","B"],["大阪","福島","B"],["大阪","新潟","B"],["大阪","長崎","B"],["大阪","鹿児島","B"],["大阪","沖縄","B","伊丹発は通年運航。関西発は特定日のみです。"],
+  ["大阪","宮古","C","通年の定期便はありません。伊丹発は年末年始・3月など期間限定、関西発は特定日のみです。"],["大阪","石垣","C","通年の定期便はありません。伊丹発は年末年始・3月など期間限定、関西発は特定日のみです。"],
+  ["名古屋","松山","A",CS("IBEX")+"ANA運航便は休止中です。"],
+  ["名古屋","札幌","B"],["名古屋","女満別","B","期間運航のみです（冬は2/19〜2/28など）。運航日はANAの時刻表で確認してください。"],["名古屋","旭川","B","期間運航のみです（冬は2/4〜2/14など）。運航日はANAの時刻表で確認してください。"],["名古屋","函館","B","ANA運航便は年末年始など期間のみ。AIRDO運航のコードシェア便は通年です。"],["名古屋","秋田","B","オリエンタルエアブリッジ（ORC）の運航です。ANA便名で予約できるかはANAサイトで確認してください。"],["名古屋","仙台","B"],["名古屋","福岡","B"],["名古屋","大分","B",CS("IBEX")],["名古屋","長崎","B"],["名古屋","宮崎","B","ANA運航便は年末年始のみ。オリエンタルエアブリッジ運航のコードシェア便は通年です。"],["名古屋","鹿児島","B"],
   ["名古屋","沖縄","C"],["名古屋","宮古","C"],["名古屋","石垣","D"],
-  ["札幌","利尻","A"],["札幌","稚内","A"],["札幌","女満別","A"],["札幌","根室中標津","A"],["札幌","オホーツク紋別","A"],["札幌","釧路","A"],["札幌","函館","A"],["札幌","青森","A"],["札幌","秋田","A"],
-  ["札幌","広島","B"],["札幌","松山","B"],["札幌","岡山","B"],["札幌","小松","B"],["札幌","新潟","B"],["札幌","富山","B"],["札幌","静岡","B"],["札幌","仙台","B"],["札幌","福島","B"],
-  ["札幌","福岡","C"],["札幌","沖縄","D"],
+  ["札幌","利尻","A","6〜9月の季節運航です。"],["札幌","稚内","A"],["札幌","女満別","A"],["札幌","根室中標津","A"],["札幌","釧路","A"],["札幌","函館","A"],["札幌","青森","A"],["札幌","秋田","A"],
+  ["札幌","広島","B"],["札幌","岡山","B"],["札幌","小松","B"],["札幌","新潟","B"],["札幌","富山","B"],["札幌","仙台","B"],["札幌","福島","B"],
+  ["札幌","福岡","C"],
   ["福岡","対馬","A"],["福岡","五島福江","A"],["福岡","宮崎","A"],
-  ["福岡","仙台","B"],["福岡","新潟","B"],["福岡","小松","B"],["福岡","沖縄","B"],["福岡","宮古","B"],["福岡","石垣","B"],
-  ["沖縄","宮古","A"],["沖縄","石垣","A"],
-  ["沖縄","広島","B"],["沖縄","岩国","B"],["沖縄","高松","B"],["沖縄","松山","B"],["沖縄","熊本","B"],["沖縄","長崎","B"],["沖縄","宮崎","B"],["沖縄","鹿児島","B"],
-  ["沖縄","静岡","C"],["沖縄","仙台","D"],["沖縄","新潟","D"],
-  ["長崎","壱岐","A"],["長崎","五島福江","A"],["長崎","対馬","A"],["仙台","小松","A"],["仙台","広島","B"],["静岡","沖縄","C"]
+  ["福岡","仙台","B",CS("IBEX・スターフライヤー")],["福岡","新潟","B",CS("IBEX")],["福岡","小松","B"],["福岡","沖縄","B"],
+  ["沖縄","宮古","A"],["沖縄","石垣","A"],["宮古","石垣","A"],["沖縄","沖永良部","A",CS("日本エアコミューター（JAC）")],
+  ["沖縄","広島","B"],["沖縄","岩国","B"],["沖縄","高松","B"],["沖縄","松山","B"],["沖縄","熊本","B"],["沖縄","宮崎","B",CS("ソラシドエア")],["沖縄","鹿児島","B",CS("ソラシドエア")],["沖縄","北九州","B",CS("スターフライヤー")+"季節運航です。"],
+  ["沖縄","仙台","D"],
+  ["長崎","壱岐","A",CS("オリエンタルエアブリッジ")],["長崎","五島福江","A",CS("オリエンタルエアブリッジ")],["長崎","対馬","A",CS("オリエンタルエアブリッジ")],["仙台","広島","B",CS("IBEX")],
+  ["鹿児島","種子島","A",CS("日本エアコミューター（JAC）")],["鹿児島","屋久島","A",CS("日本エアコミューター（JAC）")],["鹿児島","奄美","A",CS("日本エアコミューター（JAC）")],["鹿児島","喜界島","A",CS("日本エアコミューター（JAC）")],["鹿児島","徳之島","A",CS("日本エアコミューター（JAC）")],["鹿児島","沖永良部","B",CS("日本エアコミューター（JAC）")],["鹿児島","与論","B",CS("日本エアコミューター（JAC）")],
+  ["奄美","喜界島","A",CS("日本エアコミューター（JAC）")],["奄美","徳之島","A",CS("日本エアコミューター（JAC）")+"一部の便は対象外です。"],["徳之島","沖永良部","A",CS("日本エアコミューター（JAC）")]
 ];
 var ANA_DOM_SEASONS = [
   ["2026-05-19","2026-07-17","R"],["2026-07-18","2026-08-30","H"],["2026-08-31","2026-11-30","R"],
@@ -225,16 +237,27 @@ var ANA_DOM_SEASONS = [
   ["2027-01-07","2027-02-28","L"],["2027-03-01","2027-03-11","R"],["2027-03-12","2027-03-31","H"]
 ];
 var ANA_INTL_ZONES = {
-  zone2:{label:"韓国・ロシア1（Zone 2）",group:"asia",list:["ソウル","ウラジオストク"],rates:{Y:{L:12000,R:15000,H:24000},C:{L:36000,R:41000,H:50000}}},
-  zone3:{label:"アジア1（Zone 3）",group:"asia",list:["北京","大連","瀋陽","青島","上海","杭州","広州","厦門","成都","武漢","深セン","香港","台北","マニラ"],rates:{Y:{L:17000,R:20000,H:30000},PY:{L:30000,R:33000,H:47000},C:{L:48000,R:53000,H:65000}}},
-  zone4:{label:"アジア2（Zone 4）",group:"asia",list:["シンガポール","バンコク","ホーチミン","ヤンゴン","ジャカルタ","ムンバイ","デリー","ハノイ","クアラルンプール","プノンペン","チェンナイ"],rates:{Y:{L:30000,R:35000,H:50000},PY:{L:46000,R:51000,H:71000},C:{L:80000,R:85000,H:95000},F:{L:115000,R:120000,H:171000}}},
+  zone2:{label:"韓国（Zone 2）",group:"asia",list:["ソウル"],rates:{Y:{L:12000,R:15000,H:24000},C:{L:36000,R:41000,H:50000}}},
+  zone3:{label:"アジア1（Zone 3）",group:"asia",list:["北京","大連","青島","上海","杭州","広州","深セン","香港","台北","マニラ"],rates:{Y:{L:17000,R:20000,H:30000},PY:{L:30000,R:33000,H:47000},C:{L:48000,R:53000,H:65000}}},
+  zone4:{label:"アジア2（Zone 4）",group:"asia",list:["シンガポール","バンコク","ホーチミン","ジャカルタ","ムンバイ","デリー","ハノイ","クアラルンプール"],rates:{Y:{L:30000,R:35000,H:50000},PY:{L:46000,R:51000,H:71000},C:{L:80000,R:85000,H:95000},F:{L:115000,R:120000,H:171000}}},
   zone5:{label:"ハワイ（Zone 5）",group:"hawaii_oce",list:["ホノルル"],rates:{Y:{L:35000,R:40000,H:65000},PY:{L:53000,R:58000,H:88000},C:{L:80000,R:85000,H:135000},F:{L:120000,R:140000,H:240000}}},
-  zone6:{label:"北米（Zone 6）",group:"amer_eu",list:["ロサンゼルス","サンフランシスコ","シアトル","サンノゼ","ワシントン","ニューヨーク","シカゴ","ヒューストン","バンクーバー","メキシコシティ"],rates:{Y:{L:40000,R:50000,H:72000},PY:{L:62000,R:72000,H:101000},C:{L:100000,R:105000,H:165000},F:{L:150000,R:170000,H:300000}}},
-  zone7:{label:"欧州・ロシア2（Zone 7）",group:"amer_eu",list:["ロンドン","パリ","フランクフルト","ミュンヘン","デュッセルドルフ","ブリュッセル","ウィーン","ミラノ","ストックホルム","モスクワ","イスタンブール"],rates:{Y:{L:45000,R:55000,H:78000},PY:{L:67000,R:77000,H:107000},C:{L:110000,R:115000,H:180000},F:{L:165000,R:190000,H:330000}}},
+  zone6:{label:"北米（Zone 6）",group:"amer_eu",list:["ロサンゼルス","サンフランシスコ","シアトル","ワシントン","ニューヨーク","シカゴ","ヒューストン","バンクーバー","メキシコシティ"],rates:{Y:{L:40000,R:50000,H:72000},PY:{L:62000,R:72000,H:101000},C:{L:100000,R:105000,H:165000},F:{L:150000,R:170000,H:300000}}},
+  zone7:{label:"欧州（Zone 7）",group:"amer_eu",list:["ロンドン","パリ","フランクフルト","ミュンヘン","ブリュッセル","ウィーン","ミラノ","ストックホルム","イスタンブール"],rates:{Y:{L:45000,R:55000,H:78000},PY:{L:67000,R:77000,H:107000},C:{L:110000,R:115000,H:180000},F:{L:165000,R:190000,H:330000}}},
   zone10:{label:"オセアニア（Zone 10）",group:"hawaii_oce",list:["シドニー","パース"],rates:{Y:{L:37000,R:45000,H:65000},PY:{L:54000,R:62000,H:88000},C:{L:80000,R:90000,H:135000}}}
 };
 var ANA_CITY_ZONE = {};
 Object.keys(ANA_INTL_ZONES).forEach(function(zk){ ANA_INTL_ZONES[zk].list.forEach(function(c){ ANA_CITY_ZONE[c]=zk; }); });
+/* 提携航空会社特典航空券（2025/6/24以降の予約・発券分、日本Zone 1-A発着の往復マイル。シーズン変動なし。片道は半分） */
+var ANA_PARTNER = [
+  {city:"グアム", air:"ユナイテッド航空", zone:"Zone 3（アジア1）", rates:{Y:20000,C:40000}, dep:"羽田・成田・関西・中部（中部は週3便）"},
+  {city:"サイパン", air:"ユナイテッド航空", zone:"Zone 10（オセアニア・ミクロネシア）", rates:{Y:45000,C:85000}, dep:"成田のみ（週3便）"},
+  {city:"パラオ", air:"ユナイテッド航空", zone:"Zone 10（オセアニア・ミクロネシア）", rates:{Y:45000,C:85000}, dep:"成田のみ（週2便）"},
+  {city:"セブ", air:"フィリピン航空", zone:"Zone 3（アジア1）", rates:{Y:20000,C:40000}, dep:"成田・関西。ANAウェブでは予約できず電話申し込み。一部区間は販売停止中"},
+  {city:"ダナン", air:"ベトナム航空", zone:"Zone 4（アジア2）", rates:{Y:35000,C:60000}, dep:"成田・関西"},
+  {city:"オークランド", air:"ニュージーランド航空", zone:"Zone 10（オセアニア・ミクロネシア）", rates:{Y:45000,C:85000}, dep:"成田"}
+];
+var ANA_PARTNER_CITY = {};
+ANA_PARTNER.forEach(function(p){ ANA_PARTNER_CITY[p.city]=p; });
 var ANA_INTL_SEASONS = {
   asia:[["2026-01-01","2026-01-04","H"],["2026-01-05","2026-02-13","L"],["2026-02-14","2026-03-31","R"],["2026-04-01","2026-04-28","L"],["2026-04-29","2026-05-10","H"],["2026-05-11","2026-06-30","L"],["2026-07-01","2026-07-17","R"],["2026-07-18","2026-08-23","H"],["2026-08-24","2026-12-20","R"],["2026-12-21","2026-12-31","H"],["2027-01-01","2027-01-04","H"],["2027-01-05","2027-02-03","L"],["2027-02-04","2027-02-06","H"],["2027-02-07","2027-03-31","R"],["2027-04-01","2027-04-11","R"],["2027-04-12","2027-04-28","L"],["2027-04-29","2027-05-09","H"],["2027-05-10","2027-06-30","L"],["2027-07-01","2027-07-15","R"],["2027-07-16","2027-08-23","H"],["2027-08-24","2027-09-30","R"],["2027-10-01","2027-10-07","H"],["2027-10-08","2027-11-30","R"],["2027-12-01","2027-12-19","L"],["2027-12-20","2027-12-31","H"]],
   amer_eu:[["2026-01-01","2026-01-03","H"],["2026-01-04","2026-01-05","R"],["2026-01-06","2026-02-28","L"],["2026-03-01","2026-03-31","R"],["2026-04-01","2026-04-28","L"],["2026-04-29","2026-05-09","H"],["2026-05-10","2026-07-15","R"],["2026-07-16","2026-08-23","H"],["2026-08-24","2026-12-18","R"],["2026-12-19","2026-12-31","H"],["2027-01-01","2027-01-03","H"],["2027-01-04","2027-01-05","R"],["2027-01-06","2027-02-28","L"],["2027-03-01","2027-04-28","R"],["2027-04-29","2027-05-09","H"],["2027-05-10","2027-07-15","R"],["2027-07-16","2027-08-22","H"],["2027-08-23","2027-12-19","R"],["2027-12-20","2027-12-31","H"]],
@@ -275,13 +298,13 @@ JAL_INTL_REGIONS.forEach(function(r){ r.cities.forEach(function(c){ JAL_INTL_CIT
 /* =========================== 共通 =========================== */
 function domKey(a,b){ return [a,b].sort().join("|"); }
 function buildDom(pairs, jal){
-  var map={}, set={};
+  var map={}, notes={}, set={};
   pairs.forEach(function(p){
     if(jal) map[domKey(p[0],p[1])]={Y:p[2],J:p[3],F:p[4]};
-    else map[domKey(p[0],p[1])]=p[2];
+    else { map[domKey(p[0],p[1])]=p[2]; if(p[3]) notes[domKey(p[0],p[1])]=p[3]; }
     set[p[0]]=1; set[p[1]]=1;
   });
-  return {map:map, airports:Object.keys(set)};
+  return {map:map, notes:notes, airports:Object.keys(set)};
 }
 var ANA_DOM=buildDom(ANA_DOM_PAIRS,false), JAL_DOM=buildDom(JAL_DOM_PAIRS,true);
 var INTL_DEP=["東京","大阪","名古屋","札幌","福岡","沖縄"];
@@ -305,13 +328,14 @@ var PAX=[
 ];
 
 /* ---- コンテキスト ---- */
-function seasonal(){ return state.airline==="ANA"; }
+function isPartner(){ return state.airline==="ANA" && state.mode==="international" && !!ANA_PARTNER_CITY[state.destCity]; }
+function seasonal(){ return state.airline==="ANA" && !isPartner(); }
 function domMap(){ return state.airline==="ANA"?ANA_DOM.map:JAL_DOM.map; }
 function domAirports(){ return state.airline==="ANA"?ANA_DOM.airports:JAL_DOM.airports; }
 function domData(a,b){ return domMap()[domKey(a,b)]; }
 function anaZone(){ return ANA_INTL_ZONES[ANA_CITY_ZONE[state.destCity]]; }
 function intlCityList(){
-  if(state.airline==="ANA"){ var a=[]; Object.keys(ANA_INTL_ZONES).forEach(function(z){ a=a.concat(ANA_INTL_ZONES[z].list); }); return a; }
+  if(state.airline==="ANA"){ var a=[]; Object.keys(ANA_INTL_ZONES).forEach(function(z){ a=a.concat(ANA_INTL_ZONES[z].list); }); return a.concat(ANA_PARTNER.map(function(p){return p.city;})); }
   return Object.keys(JAL_INTL_CITY);
 }
 function classes(){
@@ -320,7 +344,7 @@ function classes(){
     var d=domData(state.depAir,state.arrAir)||{}; var arr=[{k:"Y",l:"普通席"}];
     if(d.J) arr.push({k:"J",l:"クラスJ"}); if(d.F) arr.push({k:"F",l:"ファースト"}); return arr;
   } else {
-    if(state.airline==="ANA"){ var z=anaZone(); return Object.keys(z.rates).map(function(k){return {k:k,l:CABLABEL[k]};}); }
+    if(state.airline==="ANA"){ var z=isPartner()?ANA_PARTNER_CITY[state.destCity]:anaZone(); return Object.keys(z.rates).map(function(k){return {k:k,l:CABLABEL[k]};}); }
     var c=JAL_INTL_CITY[state.destCity]||{}; var a=[{k:"Y",l:"エコノミー"}];
     if(c.PY) a.push({k:"PY",l:"プレミアムエコノミー"}); if(c.C) a.push({k:"C",l:"ビジネス"}); return a;
   }
@@ -331,6 +355,7 @@ function legMiles(season){
     if(state.airline==="ANA") return ANA_DOM_RATES[domData(state.depAir,state.arrAir)][season];
     return domData(state.depAir,state.arrAir)[state.cls];
   } else {
+    if(isPartner()) return ANA_PARTNER_CITY[state.destCity].rates[state.cls]/2;
     if(state.airline==="ANA") return anaZone().rates[state.cls][season]/2;
     return JAL_INTL_CITY[state.destCity][state.cls];
   }
@@ -360,8 +385,16 @@ function fillDest(){
   if(state.airline==="ANA"){
     Object.keys(ANA_INTL_ZONES).forEach(function(zk){ var z=ANA_INTL_ZONES[zk]; var og=document.createElement("optgroup"); og.label=z.label;
       z.list.forEach(function(c){ var o=document.createElement("option"); o.value=c; o.textContent=c; if(c===state.destCity)o.selected=true; og.appendChild(o); }); s.appendChild(og); });
-    $("cities").textContent="ゾーン："+anaZone().label;
-    $("intlNote").textContent="ANA国際線は日本発着（Zone 1）が基準のため、どの日本の空港から出発しても必要マイル数は同じです。";
+    var pg=document.createElement("optgroup"); pg.label="提携航空会社の便（シーズン変動なし）";
+    ANA_PARTNER.forEach(function(p){ var o=document.createElement("option"); o.value=p.city; o.textContent=p.city+"（"+p.air+"）"; if(p.city===state.destCity)o.selected=true; pg.appendChild(o); }); s.appendChild(pg);
+    if(isPartner()){
+      var pp=ANA_PARTNER_CITY[state.destCity];
+      $("cities").textContent="提携航空会社特典："+pp.air+"・"+pp.zone;
+      $("intlNote").textContent="日本からの直行便："+pp.dep+"。提携航空会社の特典はANA便とは別のマイル表で、シーズンによる変動はありません。海外で別の区間を足すと必要マイルが増えます（Zone 1-B）。";
+    } else {
+      $("cities").textContent="ゾーン："+anaZone().label;
+      $("intlNote").textContent=(state.intlDep==="名古屋"?"ANAは中部発の国際線を運航していないため、羽田・成田へANA国内線で乗り継ぎます。":"")+"ANA国際線は日本（Zone 1）発着が基準で、日本の空港ならどこから出発しても必要マイル数は同じです（国内線の乗り継ぎはANA便の普通席のみ）。";
+    }
   } else {
     JAL_INTL_REGIONS.forEach(function(r){ var og=document.createElement("optgroup"); og.label=r.label;
       r.cities.forEach(function(c){ var o=document.createElement("option"); o.value=c[0]; o.textContent=c[0]; if(c[0]===state.destCity)o.selected=true; og.appendChild(o); }); s.appendChild(og); });
@@ -382,6 +415,7 @@ function fillPax(){
   var box=$("paxBox"); box.innerHTML="";
   PAX.forEach(function(p){
     var ht=p.ht||(state.mode==="domestic"?p.htDom:p.htIntl);
+    if(p.key==="infLap" && isPartner()) ht="幼児運賃を購入（マイル不可）";
     var row=document.createElement("div"); row.className="stepper";
     row.innerHTML='<div><div class="nm">'+p.nm+'</div><div class="ht">'+ht+'</div></div>'+
       '<div class="ctrl"><button class="step-btn">−</button><span class="step-val">'+state[p.key]+'</span><button class="step-btn">＋</button></div>';
@@ -433,7 +467,7 @@ function chip(label,s){ return '<span class="chip" style="border:1.5px solid '+S
 function breakdown(per,pil,pax){
   var h='<div class="rows"><div class="row"><span>大人1名あたり'+(state.tripType==="roundtrip"?"（往復）":"（片道）")+'</span><b>'+fmt(per)+' マイル</b></div>';
   if(pax>0) h+='<div class="row"><span>大人・小児・幼児(席) ×'+pax+'名</span><b>'+fmt(per*pax)+' マイル</b></div>';
-  if(state.infLap>0) h+='<div class="row"><span>幼児(膝上) ×'+state.infLap+'名</span><b>'+(state.mode==="domestic"?"0 マイル（無料）":fmt(pil*state.infLap)+" マイル")+'</b></div>';
+  if(state.infLap>0) h+='<div class="row"><span>幼児(膝上) ×'+state.infLap+'名</span><b>'+(state.mode==="domestic"?"0 マイル（無料）":(isPartner()?"マイル不可（幼児運賃を購入）":fmt(pil*state.infLap)+" マイル"))+'</b></div>';
   return h+'</div>';
 }
 function renderSpecific(r){
@@ -451,14 +485,19 @@ function renderOverview(pax,note){
 }
 function renderJAL(pax){
   var per=legMiles(null)*(state.tripType==="roundtrip"?2:1);
-  var pil=state.mode==="domestic"?0:Math.round(legMiles(null)*0.1)*(state.tripType==="roundtrip"?2:1);
+  var pil=(state.mode==="domestic"||isPartner())?0:Math.round(legMiles(null)*0.1)*(state.tripType==="roundtrip"?2:1);
   var total=per*pax+pil*state.infLap;
   var h='<div class="total-wrap"><div class="total-lbl">合計必要マイル</div><div class="total-num">'+fmt(total)+'<small>マイル</small></div></div>';
   h+=breakdown(per,pil,pax);
-  h+='<div class="jal-note">JALは搭乗日によるマイル数の変動はありません。</div>';
+  h+='<div class="jal-note">'+(isPartner()?"提携航空会社の特典は搭乗日によるマイル数の変動がありません。別途、税金・燃油サーチャージなどがかかります。":"JALは搭乗日によるマイル数の変動はありません。")+'</div>';
   $("result").innerHTML=h;
 }
+function updateDomNote(){
+  var n=(state.mode==="domestic" && state.airline==="ANA")?ANA_DOM.notes[domKey(state.depAir,state.arrAir)]:"";
+  $("domNote").textContent=n||""; $("domNote").classList.toggle("hidden",!n);
+}
 function calc(){
+  updateDomNote();
   $("seasonRef").classList.toggle("hidden",!seasonal());
   if(seasonal()) renderSeasonRef();
   var clsLabel=(classes().filter(function(c){return c.k===state.cls;})[0]||{}).l||"";
@@ -506,8 +545,8 @@ document.querySelectorAll(".tab").forEach(function(t){ t.addEventListener("click
 document.querySelectorAll(".pill").forEach(function(p){ p.addEventListener("click",function(){ state.tripType=p.dataset.trip; syncTrip(); calc(); }); });
 $("depAir").addEventListener("change",function(e){ state.depAir=e.target.value; fillDomSelects(); fillCabins(); calc(); });
 $("arrAir").addEventListener("change",function(e){ state.arrAir=e.target.value; fillCabins(); calc(); });
-$("intlDep").addEventListener("change",function(e){ state.intlDep=e.target.value; });
-$("destCity").addEventListener("change",function(e){ state.destCity=e.target.value; fillDest(); fillCabins(); calc(); });
+$("intlDep").addEventListener("change",function(e){ state.intlDep=e.target.value; fillDest(); });
+$("destCity").addEventListener("change",function(e){ state.destCity=e.target.value; fillDest(); fillCabins(); fillPax(); calc(); });
 $("depDate").addEventListener("change",function(e){ state.depDate=e.target.value; calc(); });
 $("retDate").addEventListener("change",function(e){ state.retDate=e.target.value; calc(); });
 
