@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<!-- BUILD_TAG: 2026-10-31b -->
+<!-- BUILD_TAG: 2026-10-31c -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ANA・JAL 特典航空券 マイル計算｜国内・海外</title>
@@ -205,7 +205,7 @@
 
     <div class="reach" id="reach">
       <div class="reach-title">ANAマイルで行ける場所（往復・人数分の合計）</div>
-      <div class="reach-lead">手持ちマイルと人数を入れると、往復でいくら必要かを行き先ごとに一覧にします。緑のマスが手持ちで足りる組み合わせです（単位：万マイル）。</div>
+      <div class="reach-lead">手持ちマイルと人数を入れると、往復でいくら必要かを一覧にします。必要マイルが同じ行き先は1行にまとめています。緑のマスが手持ちで足りる組み合わせです（単位：万マイル）。</div>
       <div class="reach-form">
         <div><div class="flabel">手持ちマイル</div><select id="reachBudget" class="field"></select></div>
         <div><div class="flabel">人数</div><select id="reachPax" class="field"></select></div>
@@ -232,7 +232,7 @@
         <li>JAL国内線のファーストは羽田発着の一部路線のみ、JAL国際線は一部都市の代表値です。実際の必要マイル・空席は必ず各社公式でご確認ください。</li>
       </ul>
     </div>
-    <div class="foot">※ 本ツールは概算用です。各社公式の予約画面の数値が優先されます。<br>BUILD_TAG: 2026-10-31b（就航路線は2026年10月時点）</div>
+    <div class="foot">※ 本ツールは概算用です。各社公式の予約画面の数値が優先されます。<br>BUILD_TAG: 2026-10-31c（就航路線は2026年10月時点）</div>
   </main>
 
 <script>
@@ -583,22 +583,27 @@ function reachRows(dep,n){
   });
   ANA_PARTNER.forEach(function(p){
     var y=p.rates.Y*n;
-    rows.push({name:p.city,sub:"海外・"+p.air+"・"+p.dep.split("。")[0],tag:"シーズン変動なし",L:y,R:y,H:y});
+    rows.push({name:p.city,sub:"海外・提携便（シーズン変動なし）・"+p.city+"は"+p.air+"・"+p.dep.split("。")[0],tag:"",L:y,R:y,H:y});
   });
   return rows;
 }
 function renderReach(){
   var b=parseInt($("reachBudget").value,10)||0, n=parseInt($("reachPax").value,10)||1, dep=$("reachDep").value, only=$("reachOnly").checked;
   try{ localStorage.setItem("anaReach",JSON.stringify({b:b,n:n,dep:dep,only:only})); }catch(e){}
-  var rows=reachRows(dep,n).sort(function(a,c){ return a.R-c.R || a.L-c.L; });
-  var cH=0,cR=0,cL=0; rows.forEach(function(r){ if(r.H<=b)cH++; if(r.R<=b)cR++; if(r.L<=b)cL++; });
-  $("reachSum").innerHTML="手持ち <b>"+fmt(b)+"マイル</b>・<b>"+n+"人</b>で行ける行き先：ハイシーズンでも <b>"+cH+"件</b>／レギュラーなら <b>"+cR+"件</b>／ローなら <b>"+cL+"件</b>（全"+rows.length+"件）";
+  var raw=reachRows(dep,n), gmap={}, rows=[];
+  raw.forEach(function(r){ var k=r.L+"|"+r.R+"|"+r.H;
+    if(!gmap[k]){ gmap[k]={L:r.L,R:r.R,H:r.H,items:[],subs:[],cnt:0}; rows.push(gmap[k]); }
+    var g=gmap[k]; g.items.push(r.name+(r.tag?'<span class="reach-tag">'+r.tag+'</span>':'')); g.cnt++;
+    if(g.subs.indexOf(r.sub)<0) g.subs.push(r.sub); });
+  rows.sort(function(a,c){ return a.R-c.R || a.L-c.L || a.H-c.H; });
+  var cH=0,cR=0,cL=0; raw.forEach(function(r){ if(r.H<=b)cH++; if(r.R<=b)cR++; if(r.L<=b)cL++; });
+  $("reachSum").innerHTML="手持ち <b>"+fmt(b)+"マイル</b>・<b>"+n+"人</b>で行ける行き先：ハイシーズンでも <b>"+cH+"件</b>／レギュラーなら <b>"+cR+"件</b>／ローなら <b>"+cL+"件</b>（全"+raw.length+"件）";
   var h="", bi=-1;
   rows.forEach(function(r){
     if(only && r.L>b) return;
     var k=0; while(r.R>REACH_BANDS[k][0]) k++;
     if(k!==bi){ bi=k; h+='<tr class="band"><td colspan="4">レギュラーシーズンで '+REACH_BANDS[k][1]+'</td></tr>'; }
-    h+='<tr><td class="dest">'+r.name+(r.tag?'<span class="reach-tag">'+r.tag+'</span>':'')+'<small>'+r.sub+'</small></td>'+
+    h+='<tr><td class="dest">'+r.items.join("・")+'<small>'+r.subs.join("／")+'</small></td>'+
       ["L","R","H"].map(function(s){ return '<td class="'+(r[s]<=b?"ok":"ng")+'">'+man(r[s])+'</td>'; }).join("")+'</tr>';
   });
   $("reachBody").innerHTML=h||'<tr><td colspan="4" class="reach-empty">手持ちマイルで行ける行き先はありません。チェックを外すと全件を表示します。</td></tr>';
