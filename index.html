@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<!-- BUILD_TAG: 2026-10-13a -->
+<!-- BUILD_TAG: 2026-10-31a -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ANA・JAL 特典航空券 マイル計算｜国内・海外</title>
@@ -97,6 +97,25 @@
   .sr-block:last-child{border-bottom:none;}
   .sr-name{font-size:13.5px;font-weight:800;margin-bottom:3px;}
   .sr-periods{font-size:13px;color:#3c4a60;line-height:1.7;}
+  .reach{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 14px;}
+  .reach-title{font-size:15px;font-weight:900;color:var(--ink);margin-bottom:4px;}
+  .reach-lead{font-size:12px;color:#7e8aa0;margin-bottom:12px;line-height:1.6;}
+  .reach-form{display:grid;grid-template-columns:1.4fr .8fr 1fr;gap:8px;margin-bottom:10px;}
+  .reach-form .field{padding:10px 10px;font-size:15px;}
+  .reach-check{display:flex;align-items:center;gap:6px;font-size:13px;color:#3c4a60;margin-bottom:10px;}
+  .reach-sum{font-size:12.5px;color:#3c4a60;background:var(--cloud);border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.7;}
+  .reach-sum b{color:var(--ink);}
+  .reach-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .reach-table th{font-size:11.5px;font-weight:800;padding:6px 4px;border-bottom:2px solid var(--line);text-align:right;white-space:nowrap;}
+  .reach-table th:first-child{text-align:left;}
+  .reach-table td{padding:7px 4px;border-bottom:1px dashed var(--line);text-align:right;white-space:nowrap;font-weight:700;}
+  .reach-table td.dest{text-align:left;white-space:normal;font-weight:700;color:var(--ink);}
+  .reach-table td.dest small{display:block;font-size:11px;font-weight:500;color:#7e8aa0;line-height:1.4;margin-top:1px;}
+  .reach-table td.ok{color:#1f6b45;background:#e8f5ee;}
+  .reach-table td.ng{color:#b3bccb;font-weight:500;}
+  .reach-table tr.band td{background:var(--cloud);color:var(--ink);font-size:12px;font-weight:900;text-align:left;border-bottom:none;padding:6px 8px;}
+  .reach-tag{display:inline-block;font-size:10.5px;font-weight:700;color:#8a5a00;background:#fbf0d9;border-radius:4px;padding:0 5px;margin-left:4px;vertical-align:1px;}
+  .reach-empty{text-align:center;color:#7e8aa0;font-size:13px;padding:14px 0;}
   .hidden{display:none !important;}
 </style>
 </head>
@@ -184,6 +203,22 @@
       <div id="seasonBody" class="season-body hidden"></div>
     </div>
 
+    <div class="reach" id="reach">
+      <div class="reach-title">ANAマイルで行ける場所（往復・人数分の合計）</div>
+      <div class="reach-lead">手持ちマイルと人数を入れると、往復でいくら必要かを行き先ごとに一覧にします。緑のマスが手持ちで足りる組み合わせです（単位：万マイル）。</div>
+      <div class="reach-form">
+        <div><div class="flabel">手持ちマイル</div><input type="number" id="reachBudget" class="field" inputmode="numeric" min="0" step="1000" value="100000"></div>
+        <div><div class="flabel">人数</div><select id="reachPax" class="field"></select></div>
+        <div><div class="flabel">国内線の出発</div><select id="reachDep" class="field"></select></div>
+      </div>
+      <label class="reach-check"><input type="checkbox" id="reachOnly" checked> 手持ちで行けるところだけ表示</label>
+      <div class="reach-sum" id="reachSum"></div>
+      <table class="reach-table">
+        <thead><tr><th>行き先</th><th style="color:#3a7d5d">ロー</th><th style="color:#1e5aa8">レギュラー</th><th style="color:#c0492b">ハイ</th></tr></thead>
+        <tbody id="reachBody"></tbody>
+      </table>
+    </div>
+
     <div class="notes">
       <strong>ご利用にあたって</strong>
       <ul>
@@ -192,11 +227,12 @@
         <li>国際線は別途、税金・燃油サーチャージ・各種手数料がかかります（マイル外）。国内線は旅客施設使用料（PFC）等が別途必要です。</li>
         <li><strong>ANA国内線</strong>は、AIRDO・ソラシドエア・スターフライヤー・IBEX・オリエンタルエアブリッジ・日本エアコミューターが運航するコードシェア便（ANA便名）も同じマイル数で予約できます。該当区間は選択時に表示します。</li>
         <li><strong>ANA海外</strong>のグアム・サイパン・パラオ・セブ・ダナン・オークランドは提携航空会社の便です。マイル表が別で、シーズンによる変動はありません。座席なしの幼児は幼児運賃の購入が必要です。</li>
+        <li><strong>行ける場所の一覧</strong>は、座席を使う人数分（小児も大人と同じマイル）の往復合計です。往路と復路でシーズンが違う日程なら、2つの列の中間になります。税金・燃油サーチャージ・空港使用料は別にかかります。</li>
         <li>就航路線は2026年10月時点です。運休・季節運航は変わるため、予約前にANA・JALの時刻表で確認してください。</li>
         <li>JAL国内線のファーストは羽田発着の一部路線のみ、JAL国際線は一部都市の代表値です。実際の必要マイル・空席は必ず各社公式でご確認ください。</li>
       </ul>
     </div>
-    <div class="foot">※ 本ツールは概算用です。各社公式の予約画面の数値が優先されます。<br>BUILD_TAG: 2026-10-13a（就航路線は2026年10月時点）</div>
+    <div class="foot">※ 本ツールは概算用です。各社公式の予約画面の数値が優先されます。<br>BUILD_TAG: 2026-10-31a（就航路線は2026年10月時点）</div>
   </main>
 
 <script>
@@ -529,6 +565,55 @@ function renderSeasonRef(){
   $("seasonBody").innerHTML=h;
 }
 
+/* ---- マイルで行ける場所の一覧（ANA） ---- */
+var REACH_BANDS=[[50000,"5万マイル以下"],[80000,"5万〜8万マイル"],[100000,"8万〜10万マイル"],[150000,"10万〜15万マイル"],[200000,"15万〜20万マイル"],[300000,"20万〜30万マイル"],[Infinity,"30万マイル超"]];
+var REACH_ZONE_NAME={zone2:"ソウル",zone3:"台北・香港・上海・マニラほか",zone4:"バンコク・シンガポール・ハノイほか",zone5:"ホノルル",zone6:"ロサンゼルス・ニューヨーク・バンクーバーほか",zone7:"ロンドン・パリ・フランクフルトほか",zone10:"シドニー・パース"};
+function man(v){ return (Math.round(v/1000)/10).toFixed(1).replace(/\.0$/,"")+"万"; }
+function reachRows(dep,n){
+  var rows=[];
+  ANA_DOM_PAIRS.forEach(function(p){
+    var other=p[0]===dep?p[1]:(p[1]===dep?p[0]:null); if(!other) return;
+    var r=ANA_DOM_RATES[p[2]], note=p[3]||"";
+    var tag=/コードシェア|運航です/.test(note)?"提携会社の便":(/季節|期間|特定日|年末年始|定期便はありません/.test(note)?"期間限定":"");
+    rows.push({name:other,sub:"国内線・"+dep+"発",tag:tag,L:r.L*2*n,R:r.R*2*n,H:r.H*2*n});
+  });
+  Object.keys(ANA_INTL_ZONES).forEach(function(zk){
+    var z=ANA_INTL_ZONES[zk], y=z.rates.Y;
+    rows.push({name:REACH_ZONE_NAME[zk]||z.list.join("・"),sub:"海外・ANA便・"+z.label+"・日本のどの空港発も同じマイル",tag:"",L:y.L*n,R:y.R*n,H:y.H*n});
+  });
+  ANA_PARTNER.forEach(function(p){
+    var y=p.rates.Y*n;
+    rows.push({name:p.city,sub:"海外・"+p.air+"・"+p.dep.split("。")[0],tag:"シーズン変動なし",L:y,R:y,H:y});
+  });
+  return rows;
+}
+function renderReach(){
+  var b=parseInt($("reachBudget").value,10)||0, n=parseInt($("reachPax").value,10)||1, dep=$("reachDep").value, only=$("reachOnly").checked;
+  try{ localStorage.setItem("anaReach",JSON.stringify({b:b,n:n,dep:dep,only:only})); }catch(e){}
+  var rows=reachRows(dep,n).sort(function(a,c){ return a.R-c.R || a.L-c.L; });
+  var cH=0,cR=0,cL=0; rows.forEach(function(r){ if(r.H<=b)cH++; if(r.R<=b)cR++; if(r.L<=b)cL++; });
+  $("reachSum").innerHTML="手持ち <b>"+fmt(b)+"マイル</b>・<b>"+n+"人</b>で行ける行き先：ハイシーズンでも <b>"+cH+"件</b>／レギュラーなら <b>"+cR+"件</b>／ローなら <b>"+cL+"件</b>（全"+rows.length+"件）";
+  var h="", bi=-1;
+  rows.forEach(function(r){
+    if(only && r.L>b) return;
+    var k=0; while(r.R>REACH_BANDS[k][0]) k++;
+    if(k!==bi){ bi=k; h+='<tr class="band"><td colspan="4">レギュラーシーズンで '+REACH_BANDS[k][1]+'</td></tr>'; }
+    h+='<tr><td class="dest">'+r.name+(r.tag?'<span class="reach-tag">'+r.tag+'</span>':'')+'<small>'+r.sub+'</small></td>'+
+      ["L","R","H"].map(function(s){ return '<td class="'+(r[s]<=b?"ok":"ng")+'">'+man(r[s])+'</td>'; }).join("")+'</tr>';
+  });
+  $("reachBody").innerHTML=h||'<tr><td colspan="4" class="reach-empty">手持ちマイルで行ける行き先はありません。チェックを外すと全件を表示します。</td></tr>';
+}
+function initReach(){
+  var saved={}; try{ saved=JSON.parse(localStorage.getItem("anaReach")||"{}")||{}; }catch(e){ saved={}; }
+  var ps=$("reachPax"); for(var i=1;i<=8;i++){ var o=document.createElement("option"); o.value=i; o.textContent=i+"人"; ps.appendChild(o); }
+  ps.value=saved.n||4;
+  fillGrouped($("reachDep"),ANA_DOM.airports,saved.dep&&ANA_DOM.airports.indexOf(saved.dep)>=0?saved.dep:"名古屋");
+  if(saved.b) $("reachBudget").value=saved.b;
+  if(saved.only===false) $("reachOnly").checked=false;
+  ["reachBudget","reachPax","reachDep","reachOnly"].forEach(function(id){ $(id).addEventListener(id==="reachBudget"?"input":"change",renderReach); });
+  renderReach();
+}
+
 /* ---- UI同期 ---- */
 function applyAccent(){ document.documentElement.style.setProperty("--accent", state.airline==="JAL"?"#c0392b":"#1e5aa8"); }
 function syncAir(){ document.querySelectorAll(".air-tab").forEach(function(t){ t.classList.toggle("active",t.dataset.air===state.airline); }); applyAccent(); }
@@ -551,7 +636,7 @@ $("depDate").addEventListener("change",function(e){ state.depDate=e.target.value
 $("retDate").addEventListener("change",function(e){ state.retDate=e.target.value; calc(); });
 
 /* ---- 初期化 ---- */
-syncAir(); normalize(); fillDomSelects(); fillIntlDep(); fillDest(); fillCabins(); fillPax(); syncMode(); syncTrip(); calc();
+syncAir(); normalize(); fillDomSelects(); fillIntlDep(); fillDest(); fillCabins(); fillPax(); syncMode(); syncTrip(); calc(); initReach();
 </script>
 </body>
 </html>
