@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<!-- BUILD_TAG: 2026-10-31a -->
+<!-- BUILD_TAG: 2026-10-31b -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ANA・JAL 特典航空券 マイル計算｜国内・海外</title>
@@ -207,7 +207,7 @@
       <div class="reach-title">ANAマイルで行ける場所（往復・人数分の合計）</div>
       <div class="reach-lead">手持ちマイルと人数を入れると、往復でいくら必要かを行き先ごとに一覧にします。緑のマスが手持ちで足りる組み合わせです（単位：万マイル）。</div>
       <div class="reach-form">
-        <div><div class="flabel">手持ちマイル</div><input type="number" id="reachBudget" class="field" inputmode="numeric" min="0" step="1000" value="100000"></div>
+        <div><div class="flabel">手持ちマイル</div><select id="reachBudget" class="field"></select></div>
         <div><div class="flabel">人数</div><select id="reachPax" class="field"></select></div>
         <div><div class="flabel">国内線の出発</div><select id="reachDep" class="field"></select></div>
       </div>
@@ -232,7 +232,7 @@
         <li>JAL国内線のファーストは羽田発着の一部路線のみ、JAL国際線は一部都市の代表値です。実際の必要マイル・空席は必ず各社公式でご確認ください。</li>
       </ul>
     </div>
-    <div class="foot">※ 本ツールは概算用です。各社公式の予約画面の数値が優先されます。<br>BUILD_TAG: 2026-10-31a（就航路線は2026年10月時点）</div>
+    <div class="foot">※ 本ツールは概算用です。各社公式の予約画面の数値が優先されます。<br>BUILD_TAG: 2026-10-31b（就航路線は2026年10月時点）</div>
   </main>
 
 <script>
@@ -608,9 +608,10 @@ function initReach(){
   var ps=$("reachPax"); for(var i=1;i<=8;i++){ var o=document.createElement("option"); o.value=i; o.textContent=i+"人"; ps.appendChild(o); }
   ps.value=saved.n||4;
   fillGrouped($("reachDep"),ANA_DOM.airports,saved.dep&&ANA_DOM.airports.indexOf(saved.dep)>=0?saved.dep:"名古屋");
-  if(saved.b) $("reachBudget").value=saved.b;
+  var bs=$("reachBudget"); for(var m=10000;m<=500000;m+=10000){ var ob=document.createElement("option"); ob.value=m; ob.textContent=(m/10000)+"万マイル"; bs.appendChild(ob); }
+  var sb=Math.min(500000,Math.max(10000,Math.round((saved.b||100000)/10000)*10000)); bs.value=sb;
   if(saved.only===false) $("reachOnly").checked=false;
-  ["reachBudget","reachPax","reachDep","reachOnly"].forEach(function(id){ $(id).addEventListener(id==="reachBudget"?"input":"change",renderReach); });
+  ["reachBudget","reachPax","reachDep","reachOnly"].forEach(function(id){ $(id).addEventListener("change",renderReach); });
   renderReach();
 }
 
